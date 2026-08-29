@@ -102,7 +102,13 @@ void World_Update(void) {
     world.time += time_spent;
     if (world.time >= WORLD_DAY_LENGTH_SECONDS) world.time = 0;
 
-    for(int i = 0; i < 4; i++) World_ReadChunksQueues();
+    // Generate/mesh up to 4 chunks per frame, but stop early once ~6 ms
+    // of the frame budget is spent so chunk work cannot cause long frames.
+    double meshDeadline = GetTime() + 0.006;
+    for (int i = 0; i < 4; i++) {
+        if (i > 0 && GetTime() >= meshDeadline) break;
+        World_ReadChunksQueues();
+    }
     
 }
 
@@ -269,6 +275,9 @@ void World_ApplyShader(Shader shader) {
     world.mat.shader = shader;
 }
 
+int World_drawnChunks = 0;
+int World_loadedChunks = 0;
+
 void World_Draw(Vector3 camPosition) {
 
     ChunkMesh_PrepareDrawing(world.mat);
@@ -282,33 +291,38 @@ void World_Draw(Vector3 camPosition) {
     //Create the sorted chunk list
     struct { Chunk *chunk; float dist; } sortedChunks[amountChunks];
 
+    World_drawnChunks = 0;
+    World_loadedChunks = amountChunks;
     int sortedLength = 0;
     for (int i=0; i < hmlen(world.chunks); i++) {
         Chunk *chunk = world.chunks[i].value;
 
         if (chunk->onlyAir) continue;
 
-        if (chunk->hasTransparency) {
-            Vector3 centerChunk = Vector3Add(chunk->blockPosition, chunkLocalCenter);
-            float distFromCam = Vector3Distance(centerChunk, camPosition);
+        Vector3 centerChunk = Vector3Add(chunk->blockPosition, chunkLocalCenter);
+        float distFromCam = Vector3Distance(centerChunk, camPosition);
 
-            //Don't draw chunks behind the player
-            Vector3 toChunkVec = Vector3Normalize(Vector3Subtract(centerChunk, camPosition));
-        
-            if (distFromCam > CHUNK_SIZE_X && Vector3Distance(toChunkVec, dirVec) > frustumAngle) {
-                continue;
-            }
+        //Don't draw chunks behind the player
+        Vector3 toChunkVec = Vector3Normalize(Vector3Subtract(centerChunk, camPosition));
+        int behindPlayer = distFromCam > CHUNK_SIZE_X &&
+                           Vector3Distance(toChunkVec, dirVec) > frustumAngle;
+
+        if (chunk->hasTransparency) {
+            if (behindPlayer) continue;
 
             sortedChunks[sortedLength].dist = distFromCam;
             sortedChunks[sortedLength].chunk = chunk;
             sortedLength++;
         } else {
+            if (behindPlayer) continue;
+
             Matrix matrix = (Matrix) { 1, 0, 0, chunk->blockPosition.x,
                 0, 1, 0, chunk->blockPosition.y,
                 0, 0, 1, chunk->blockPosition.z,
                 0, 0, 0, 1 };
         
             ChunkMesh_Draw(&chunk->mesh, world.mat, matrix);
+            World_drawnChunks++;
         }
     }
     
@@ -342,6 +356,7 @@ void World_Draw(Vector3 camPosition) {
         rlDisableBackfaceCulling();
         ChunkMesh_Draw(&chunk->meshTransparent, world.mat, matrix);
         rlEnableBackfaceCulling();
+        World_drawnChunks += 2;
     }
 
     ChunkMesh_FinishDrawing();

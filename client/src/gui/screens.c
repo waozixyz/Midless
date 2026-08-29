@@ -10,6 +10,7 @@
  */
 
 #include <math.h>
+#include <stdlib.h>
 #include "kryon.h"
 #include "screens.h"
 #include "chat.h"
@@ -23,6 +24,7 @@
 GameScreen Screen_Current = SCREEN_LOGIN;
 bool Screen_cursorEnabled = false;
 bool Screen_showDebug = false;
+int Screen_debugInit = 0;
 int screenHeight;
 int screenWidth;
 bool *exitGame;
@@ -38,6 +40,14 @@ void Screens_init(Texture2D terrain, bool *exit) {
 
     SetThemeSource(THEME_SOURCE_APP);
     SetCurrentTheme(THEME_MONO, 1);
+
+    // KATALIS_DEBUG_INPUT turns on the debug overlay too, so scratch
+    // X-server runs get FPS and chunk-draw numbers without clicking.
+    if (Screen_debugInit == 0) {
+        Screen_debugInit = 1;
+        if (getenv("KATALIS_DEBUG_INPUT") != NULL)
+            Screen_showDebug = true;
+    }
 }
 
 void Screen_MakeGame(void) {
@@ -53,14 +63,18 @@ void Screen_MakeGame(void) {
             debugText = TextFormat("%2i FPS", GetFPS());
         }
 
+        const char* drawText = TextFormat("CHUNK DRAWS: %i/%i", World_drawnChunks, World_loadedChunks);
+
         const char* versionText = "Katalis Pre-Alpha";
         DrawText(versionText, 9, 9, 20, BLACK);
         DrawText(versionText, 8, 8, 20, WHITE);
 
         DrawText(debugText, 9, 29, 20, BLACK);
         DrawText(coordText, 9, 49, 20, BLACK);
+        DrawText(drawText, 9, 69, 20, BLACK);
         DrawText(debugText, 8, 28, 20, WHITE);
         DrawText(coordText, 8, 48, 20, WHITE);
+        DrawText(drawText, 8, 68, 20, WHITE);
     }
 
     //Draw crosshair

@@ -62,7 +62,8 @@ int main(void) {
 
     
     Shader shader = LoadShaderFromMemory(chunkShaderVs, chunkShaderFs);
-    Texture2D texture = Resource_LoadTexture("terrain.png"); 
+    Texture2D texture = Resource_LoadTexture("terrain.png");
+    SetTextureFilter(texture, TEXTURE_FILTER_POINT);
     
     World_ApplyTexture(texture);
     World_ApplyShader(shader);

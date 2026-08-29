@@ -27,6 +27,10 @@ typedef struct World{
 
 extern World world;
 
+// Chunk mesh submissions of the last World_Draw (debug HUD).
+extern int World_drawnChunks;
+extern int World_loadedChunks;
+
 //Initialize the world.
 void World_Init(void);
 //Load multiplayer world.
