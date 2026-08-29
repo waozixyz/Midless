@@ -51,30 +51,24 @@ void Player_Init(void) {
     // Seed the look reference from the real pointer position so the first
     // frame does not apply a giant (0,0)-to-cursor delta to the camera.
     Player_oldMousePos = GetMousePosition();
-
-    DisableCursor();
 }
 
 void Player_CheckInputs() {
     
     if (IsKeyPressed(KEY_ESCAPE)) {
         if (Screen_cursorEnabled) {
-            DisableCursor();
             Chat_open = false;
             Screen_Switch(SCREEN_GAME);
         } else {
-            EnableCursor();
             Screen_Switch(SCREEN_PAUSE);
         }
         Screen_cursorEnabled = !Screen_cursorEnabled;
     } else if (IsKeyPressed(KEY_T)) {
         if (Screen_cursorEnabled && !Chat_open) {
-            DisableCursor();
             Screen_cursorEnabled = false;
             Screen_Switch(SCREEN_GAME);
         } else {
             Chat_open = true;
-            EnableCursor();
             Screen_cursorEnabled = true;
         }
     }
@@ -90,7 +84,7 @@ void Player_CheckInputs() {
 
     static int dbg_cnt = 0;
     static int dbg_on = -1;
-    if (dbg_on < 0) dbg_on = getenv("MIDLESS_DEBUG_INPUT") != NULL;
+    if (dbg_on < 0) dbg_on = getenv("KATALIS_DEBUG_INPUT") != NULL;
     if (dbg_on && (dbg_cnt++ % 20) == 0) {
         TraceLog(LOG_WARNING, "DBG pos=%.1f,%.1f delta=%.2f,%.2f angle=%.3f,%.3f",
                  mousePos.x, mousePos.y, mousePositionDelta.x, mousePositionDelta.y,

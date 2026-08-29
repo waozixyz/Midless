@@ -25,8 +25,6 @@
 
 void GameLoop(void);
 
-// Debug harness: MIDLESS_AUTOPLAY=1 jumps straight into a local world
-// with a visible cursor, for bring-up on a scratch X server.
 
 int main(void) {
 
@@ -34,7 +32,7 @@ int main(void) {
     int screenHeight = 720;
 
     // Initialization
-    InitWindow(screenWidth, screenHeight, "Midless");
+    InitWindow(screenWidth, screenHeight, "Katalis");
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetWindowState(FLAG_WINDOW_ALWAYS_RUN);
     SetExitKey(0);
@@ -75,15 +73,11 @@ int main(void) {
     bool exitProgram = false;
     Screens_init(texture, &exitProgram);
 
-    const char *autoplay = getenv("MIDLESS_AUTOPLAY");
-    if (autoplay != NULL) {
-        World_LoadSingleplayer();
-        Screen_Switch(SCREEN_GAME);
-        // "2" keeps the gameplay input path (cursor locked); anything else
-        // shows the cursor for manual inspection.
-        if (strcmp(autoplay, "2") != 0)
-            EnableCursor();
-    }
+    // Launch directly into a local world; the title screen stays reachable
+    // from the pause menu. The cursor stays visible for now (no capture).
+    World_LoadSingleplayer();
+    Screen_Switch(SCREEN_GAME);
+    EnableCursor();
 
 
     #if defined(PLATFORM_WEB)

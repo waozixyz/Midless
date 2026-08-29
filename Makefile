@@ -4,7 +4,7 @@
 
 .DEFAULT_GOAL := run
 
-APP_NAME := midless
+APP_NAME := katalis
 KRYON_DIR := $(if $(wildcard vendor/kryon/mk/common.mk),vendor/kryon,../kryon)
 KRYON_MAKE_DIR := $(KRYON_DIR)/mk/
 

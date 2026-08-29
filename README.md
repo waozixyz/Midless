@@ -1,7 +1,28 @@
 ![Image](https://i.imgur.com/4Ku3xak.png)
 [![Chat](https://img.shields.io/discord/908871478576033832?label=%20chat%20on%20discord)](https://discord.gg/tZthSbpUcV)
 
-Midless is a free and open-source voxel game made in C.
+Katalis is a voxel sandbox built in C on the
+[kryon](https://github.com/kryonlabs/kryon) runtime.
+
+Katalis began as a port of [Midless](https://github.com/Sirvoid/Midless)
+by Sirvoid (MIT); the world, chunk engine and game design come from
+there. The client no longer links raylib directly: the chunk renderer
+runs on kryon's 3D surface tier (curated rlgl entry points plus
+raymath-style math3d) and the menus use the kryon UI toolkit. The
+desktop build targets OpenGL ES 2 with the GLSL 100 shader pair.
+
+The game launches directly into a local world with a visible cursor;
+the title screen is reachable from the pause menu. Networking
+transports (ENet/WebSocket) and the dedicated server are not part of
+this build yet.
+
+Build: `git submodule update --init --recursive`, then `make` (binary
+in `build/bin/linux/`, run it from a directory containing `textures/`,
+e.g. `cd client/bin && ../../build/bin/linux/katalis-linux-x86_64`).
+Debug aid: `KATALIS_DEBUG_INPUT=1` logs look-control state.
+
+Everything below is the original Midless readme.
+
 
 > **Kryon port fork** (woazixyz): this fork runs the client on
 > [kryon](https://github.com/kryonlabs/kryon) instead of linking raylib
@@ -16,7 +37,7 @@ Midless is a free and open-source voxel game made in C.
 > `cd client/bin && ../../build/bin/linux/midless-linux-*`).
 > Debug aids: `MIDLESS_AUTOPLAY=1` starts straight in a local world with a
 > visible cursor, `MIDLESS_AUTOPLAY=2` keeps the gameplay cursor lock,
-> `MIDLESS_DEBUG_INPUT=1` logs look-control state.
+> `KATALIS_DEBUG_INPUT=1` logs look-control state.
 >
 > Everything below is the original upstream readme.
 

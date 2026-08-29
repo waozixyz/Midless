@@ -53,7 +53,7 @@ void Screen_MakeGame(void) {
             debugText = TextFormat("%2i FPS", GetFPS());
         }
 
-        const char* versionText = "Midless Pre-Alpha 1.3 dev";
+        const char* versionText = "Katalis Pre-Alpha";
         DrawText(versionText, 9, 9, 20, BLACK);
         DrawText(versionText, 8, 8, 20, WHITE);
 
@@ -105,7 +105,6 @@ void Screen_MakePause(void) {
     //Continue Button
     if (StyledButton(offsetX , offsetY + (index++ * 35), 200, 30, "Continue", ButtonStylePrimary, 0, NULL)) {
         Screen_Switch(SCREEN_GAME);
-        DisableCursor();
         Screen_cursorEnabled = false;
     }
 
@@ -201,7 +200,7 @@ void Screen_MakeLogin(void) {
     if(IsCursorHidden()) EnableCursor();
     DrawRectangle(0, 0, screenWidth, screenHeight, BLACK);
 
-    const char *title = "MIDLESS";
+    const char *title = "KATALIS";
     int offsetY = screenHeight / 2;
     int offsetX = screenWidth / 2;
 
@@ -221,8 +220,7 @@ void Screen_MakeLogin(void) {
     Network_name = name_input;
 
     //Play button (local world)
-    if (StyledButton(offsetX - 80, offsetY + 55, 160, 30, "Singleplayer", ButtonStylePrimary, 0, NULL)) {
-        DisableCursor();
+    if (StyledButton(offsetX - 80, offsetY + 55, 160, 30, "Play", ButtonStylePrimary, 0, NULL)) {
         Screen_Switch(SCREEN_LOADING);
     }
 

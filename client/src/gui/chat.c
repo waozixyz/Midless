@@ -106,7 +106,6 @@ void Chat_Draw(Vector2 offset, Color uiColor) {
             } else {
                 Chat_AddLine(message);
             }
-            DisableCursor();
             Chat_open = false;
             Screen_cursorEnabled = false;
         }
