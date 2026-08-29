@@ -26,20 +26,27 @@ void ChunkMesh_Upload(ChunkMesh *mesh, unsigned char *vertices, unsigned short *
     mesh->vaoId = rlLoadVertexArray();
     rlEnableVertexArray(mesh->vaoId);
 
+    // Attribute slots come from the linked shader's location table, not
+    // the hardcoded desktop-GL convention (0/1/3): on OpenGL ES 2 the
+    // linker assigns attribute locations itself, so baking the wrong slot
+    // into the VAO leaves the light attribute unread and the terrain
+    // renders near-black on some drivers.
+    int *locs = world.mat.shader.locs;
+
     int vertXchar = mesh->vertexCount * sizeof(unsigned char);
     int vertXShort = mesh->vertexCount * sizeof(unsigned short);
 
     mesh->vboId[0] = rlLoadVertexBuffer(vertices, vertXchar * 3, false);
-    rlSetVertexAttribute(0, 3, RL_UNSIGNED_BYTE, 0, 0, 0);
-    rlEnableVertexAttribute(0);
+    rlSetVertexAttribute(locs[SHADER_LOC_VERTEX_POSITION], 3, RL_UNSIGNED_BYTE, 0, 0, 0);
+    rlEnableVertexAttribute(locs[SHADER_LOC_VERTEX_POSITION]);
 
     mesh->vboId[1] = rlLoadVertexBuffer(texcoords, vertXShort * 2, false);
-    rlSetVertexAttribute(1, 2, 0x1403, 0, 0, 0);
-    rlEnableVertexAttribute(1);
+    rlSetVertexAttribute(locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, 0x1403, 0, 0, 0);
+    rlEnableVertexAttribute(locs[SHADER_LOC_VERTEX_TEXCOORD01]);
 
     mesh->vboId[2] = rlLoadVertexBuffer(colors, vertXchar, false);
-    rlSetVertexAttribute(3, 1, RL_UNSIGNED_BYTE, 0, 0, 0);
-    rlEnableVertexAttribute(3);
+    rlSetVertexAttribute(locs[SHADER_LOC_VERTEX_COLOR], 1, RL_UNSIGNED_BYTE, 0, 0, 0);
+    rlEnableVertexAttribute(locs[SHADER_LOC_VERTEX_COLOR]);
 
     mesh->vboId[3] = rlLoadVertexBufferElement(indices, mesh->drawTriangleCount*3*sizeof(unsigned short), false);
 
@@ -57,7 +64,14 @@ void ChunkMesh_Unload(ChunkMesh *mesh) {
 
 void ChunkMesh_PrepareDrawing(Material mat) {
     rlEnableShader(mat.shader.id);
+
+    // Pin the atlas to texture unit 0 and point the shader sampler at it
+    // explicitly: rlEnableTexture binds on whatever unit is active, so
+    // relying on the sampler defaulting to 0 breaks on drivers where
+    // earlier rendering leaves another unit active (terrain renders black).
+    rlActiveTextureSlot(0);
     rlEnableTexture(mat.maps[0].texture.id);
+    SetShaderValueTexture(mat.shader, GetShaderLocation(mat.shader, "texture0"), mat.maps[0].texture);
 
     float drawDistance = (world.drawDistance + 2) * 16.0f;
     rlSetUniform(rlGetLocationUniform(mat.shader.id, "drawDistance"), &drawDistance, RL_SHADER_UNIFORM_FLOAT, 1);

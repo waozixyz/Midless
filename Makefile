@@ -2,7 +2,7 @@
 # Desktop local-world build; the server and web transports are out of scope
 # for now, so their sources are not compiled.
 
-.DEFAULT_GOAL := run
+.DEFAULT_GOAL := native
 
 APP_NAME := katalis
 KRYON_DIR := $(if $(wildcard vendor/kryon/mk/common.mk),vendor/kryon,../kryon)
