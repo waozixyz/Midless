@@ -307,26 +307,14 @@ void World_Draw(Vector3 camPosition) {
         int behindPlayer = distFromCam > CHUNK_SIZE_X &&
                            Vector3Distance(toChunkVec, dirVec) > frustumAngle;
 
-        if (chunk->hasTransparency) {
-            if (behindPlayer) continue;
+        if (behindPlayer) continue;
 
-            sortedChunks[sortedLength].dist = distFromCam;
-            sortedChunks[sortedLength].chunk = chunk;
-            sortedLength++;
-        } else {
-            if (behindPlayer) continue;
-
-            Matrix matrix = (Matrix) { 1, 0, 0, chunk->blockPosition.x,
-                0, 1, 0, chunk->blockPosition.y,
-                0, 0, 1, chunk->blockPosition.z,
-                0, 0, 0, 1 };
-        
-            ChunkMesh_Draw(&chunk->mesh, world.mat, matrix);
-            World_drawnChunks++;
-        }
+        sortedChunks[sortedLength].dist = distFromCam;
+        sortedChunks[sortedLength].chunk = chunk;
+        sortedLength++;
     }
     
-    //Sort chunks back to front
+    //Sort chunks near to far (insertion sort; lists are a few hundred)
     for (int i = 1; i < sortedLength; i++) {
         int j = i;
         while (j > 0 && sortedChunks[j-1].dist <= sortedChunks[j].dist) {
@@ -340,10 +328,11 @@ void World_Draw(Vector3 camPosition) {
             j = j - 1;
         }
     }
-    
-    ChunkMesh_PrepareDrawing(world.mat);
 
-    //Draw sorted chunks
+    ChunkMesh_BeginFrame();
+
+    //Opaque pass, front to back: near geometry fills depth first so far
+    //geometry gets early-z rejected instead of overdrawn.
     for (int i = 0; i < sortedLength; i++) {
         Chunk *chunk = sortedChunks[i].chunk;
 
@@ -351,12 +340,27 @@ void World_Draw(Vector3 camPosition) {
                                    0, 1, 0, chunk->blockPosition.y,
                                    0, 0, 1, chunk->blockPosition.z,
                                    0, 0, 0, 1 };
-        
+
         ChunkMesh_Draw(&chunk->mesh, world.mat, matrix);
+        World_drawnChunks++;
+    }
+
+    ChunkMesh_PrepareDrawing(world.mat);
+
+    //Transparent pass, far to near: blending order for water and leaves.
+    for (int i = sortedLength - 1; i >= 0; i--) {
+        Chunk *chunk = sortedChunks[i].chunk;
+        if (!chunk->hasTransparency) continue;
+
+        Matrix matrix = (Matrix) { 1, 0, 0, chunk->blockPosition.x,
+                                   0, 1, 0, chunk->blockPosition.y,
+                                   0, 0, 1, chunk->blockPosition.z,
+                                   0, 0, 0, 1 };
+
         rlDisableBackfaceCulling();
         ChunkMesh_Draw(&chunk->meshTransparent, world.mat, matrix);
         rlEnableBackfaceCulling();
-        World_drawnChunks += 2;
+        World_drawnChunks++;
     }
 
     ChunkMesh_FinishDrawing();

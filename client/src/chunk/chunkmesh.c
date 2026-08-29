@@ -85,13 +85,20 @@ void ChunkMesh_FinishDrawing(void) {
     rlDisableTexture();
 }
 
+// Cached per frame by ChunkMesh_BeginFrame so the per-chunk path stops
+// re-querying rlgl state (two matrix gets plus a multiply per chunk).
+static Matrix frameMatView;
+static Matrix frameMatProjection;
+
+void ChunkMesh_BeginFrame(void) {
+    frameMatView = rlGetMatrixModelview();
+    frameMatProjection = rlGetMatrixProjection();
+}
+
 void ChunkMesh_Draw(ChunkMesh *mesh, Material material, Matrix transform) {
 
-    Matrix matView = rlGetMatrixModelview();
-    Matrix matModelView = matView;
-    Matrix matProjection = rlGetMatrixProjection();
-
-    matModelView = MatrixMultiply(transform, MatrixMultiply(rlGetMatrixTransform(), matView));
+    Matrix matModelView = MatrixMultiply(transform, frameMatView);
+    Matrix matProjection = frameMatProjection;
     
     if (!rlEnableVertexArray(mesh->vaoId)) {
         rlEnableVertexBuffer(mesh->vboId[0]);
@@ -119,7 +126,4 @@ void ChunkMesh_Draw(ChunkMesh *mesh, Material material, Matrix transform) {
     rlDisableVertexArray();
     rlDisableVertexBuffer();
     rlDisableVertexBufferElement();
-
-    rlSetMatrixModelview(matView);
-    rlSetMatrixProjection(matProjection);
 }

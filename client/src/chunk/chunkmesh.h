@@ -23,6 +23,7 @@ typedef struct ChunkMesh {
 void ChunkMesh_Upload(ChunkMesh *mesh, unsigned char *vertices, unsigned short *indices, unsigned short *texcoords, unsigned char *colors);
 void ChunkMesh_Unload(ChunkMesh *mesh);
 void ChunkMesh_PrepareDrawing(Material mat);
+void ChunkMesh_BeginFrame(void);
 void ChunkMesh_FinishDrawing(void);
 void ChunkMesh_Draw(ChunkMesh *mesh, Material material, Matrix transform);
 
