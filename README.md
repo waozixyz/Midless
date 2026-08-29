@@ -19,6 +19,12 @@ this build yet.
 Build: `git submodule update --init --recursive`, then `make` (binary
 in `build/bin/linux/`, run it from a directory containing `textures/`,
 e.g. `cd client/bin && ../../build/bin/linux/katalis-linux-x86_64`).
+Gameplay additions over upstream Midless: an inventory with a 9-slot
+hotbar (mouse wheel selects; middle-click picks the block you aim at),
+E opens the inventory with a Terraria-style crafting list (mine blocks,
+click recipes), and the inventory persists with the world in
+`world/player.dat`.
+
 Debug aid: `KATALIS_DEBUG_INPUT=1` logs look-control state.
 
 Everything below is the original Midless readme.

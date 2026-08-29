@@ -20,6 +20,7 @@
 #include "networkhandler.h"
 #include "packet.h"
 #include "worldgenerator.h"
+#include "inventory.h"
 
 GameScreen Screen_Current = SCREEN_LOGIN;
 bool Screen_cursorEnabled = false;
@@ -82,27 +83,8 @@ void Screen_MakeGame(void) {
     DrawRectangle(screenWidth / 2 - 2, screenHeight / 2 + 2,  4, 6, uiColBg);
     DrawRectangle(screenWidth / 2 - 2, screenHeight / 2 - 8,  4, 6, uiColBg);
 
-    //Draw Block Selected
-    Block blockDef = Block_GetDefinition(player.blockSelected);
-    int texI = blockDef.textures[4];
-    int texX = texI % 16 * 16;
-    int texY = texI / 16 * 16;
-
-    Rectangle texRec = (Rectangle) {
-        texX + 16 - blockDef.maxBB.x,
-        texY + 16 - blockDef.maxBB.y,
-        (blockDef.maxBB.x - blockDef.minBB.x),
-        (blockDef.maxBB.y - blockDef.minBB.y)
-    };
-
-    Rectangle destRec = (Rectangle) {
-        screenWidth - 80 + (blockDef.minBB.x * 4),
-        16 + ((16 - blockDef.maxBB.y) * 4),
-        (blockDef.maxBB.x - blockDef.minBB.x) * 4,
-        (blockDef.maxBB.y - blockDef.minBB.y) * 4
-    };
-
-    DrawTexturePro(mapTerrain, texRec, destRec, (Vector2) {0, 0}, 0, WHITE);
+    //Hotbar + inventory/crafting overlay
+    Inventory_Draw(mapTerrain, screenWidth, screenHeight);
 
     //Draw Chat
     Chat_Draw((Vector2){16, screenHeight - 52}, uiColBg);

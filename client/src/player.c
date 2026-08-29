@@ -10,6 +10,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "kryon.h"
+#include "inventory.h"
 #include "player.h"
 #include "world.h"
 #include "raycast.h"
@@ -42,7 +43,7 @@ void Player_Init(void) {
     player.collisionBox.min = (Vector3) { 0.2f, 0, 0.2f };
     player.collisionBox.max = (Vector3) { 0.8f, 1.5f, 0.8f };
 
-    player.blockSelected = 15;
+    Inventory_Reset();
 
     Player_LastPositionPacketTime = 0;
 
@@ -56,13 +57,24 @@ void Player_Init(void) {
 void Player_CheckInputs() {
     
     if (IsKeyPressed(KEY_ESCAPE)) {
-        if (Screen_cursorEnabled) {
+        if (Inventory_open) {
+            Inventory_open = false;
+            Screen_cursorEnabled = false;
+        } else if (Screen_cursorEnabled) {
             Chat_open = false;
             Screen_Switch(SCREEN_GAME);
         } else {
             Screen_Switch(SCREEN_PAUSE);
         }
         Screen_cursorEnabled = !Screen_cursorEnabled;
+    } else if (IsKeyPressed(KEY_E) && !Chat_open) {
+        if (!Screen_cursorEnabled) {
+            Inventory_open = true;
+            Screen_cursorEnabled = true;
+        } else if (Inventory_open) {
+            Inventory_open = false;
+            Screen_cursorEnabled = false;
+        }
     } else if (IsKeyPressed(KEY_T)) {
         if (Screen_cursorEnabled && !Chat_open) {
             Screen_cursorEnabled = false;
@@ -153,33 +165,29 @@ void Player_CheckInputs() {
         player.velocity = Vector3Add(player.velocity, moveVel);
         
         float wheel = GetMouseWheelMove();
-        if (wheel > 0.35f) player.blockSelected++;
-        if (wheel < -0.35f) player.blockSelected--;
-        if (player.blockSelected > 18) player.blockSelected = 1;
-        if (player.blockSelected < 1) player.blockSelected = 18;
+        if (wheel > 0.35f) Inventory_hotbar = (Inventory_hotbar + 1) % INV_HOTBAR_SLOTS;
+        if (wheel < -0.35f) Inventory_hotbar = (Inventory_hotbar + INV_HOTBAR_SLOTS - 1) % INV_HOTBAR_SLOTS;
         
         player.rayResult = Raycast_Do(player.camera.position, (Vector3) { forwardX, forwardY, forwardZ}, true);
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) { //Break Block
-            if (player.rayResult.hitBlockID != -1) {
+            if (player.rayResult.hitBlockID > 0) {
+                Inventory_Add(player.rayResult.hitBlockID, 1);
                 World_SetBlock(player.rayResult.hitPos, 0, true);
                 Network_Send(Packet_SetBlock(0, player.rayResult.hitPos));
             }
         } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) { //Place Block
             Vector3 placePos = Vector3Add(player.rayResult.hitPos, player.rayResult.normal);
             
-            if (player.rayResult.hitBlockID != -1) {
+            int placeBlock = Inventory_SelectedBlock();
+            if (placeBlock > 0 && player.rayResult.hitBlockID != -1) {
                 int bottomBlockID = World_GetBlock(Vector3Add(placePos, (Vector3){0, -1, 0}));
-                switch (player.blockSelected)
+                switch (placeBlock)
                 {
-                    case -1: // null
-                    case 0: // air
-                        break;
-
                     case 12:
                     case 13:
                         if (bottomBlockID == 2 || bottomBlockID == 3 || bottomBlockID == 6) { // dirt, grass, sand
-                            Player_TryPlaceBlock(placePos, player.blockSelected);
+                            Player_TryPlaceBlock(placePos, placeBlock);
                         }
                         break;
                         
@@ -196,13 +204,18 @@ void Player_CheckInputs() {
                         }
 
                     default:
-                        Player_TryPlaceBlock(placePos, player.blockSelected);
+                        Player_TryPlaceBlock(placePos, placeBlock);
                         break;
                 }
             }
         } else if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) { //Pick Block
             int pickedID = World_GetBlock(player.rayResult.hitPos);
-            player.blockSelected = pickedID;
+            for (int i = 0; i < INV_HOTBAR_SLOTS; i++) {
+                if (Inventory_slots[i].blockID == pickedID) {
+                    Inventory_hotbar = i;
+                    break;
+                }
+            }
         }
     }
     //Place camera's target to the direction looking at.
@@ -220,6 +233,9 @@ bool Player_TryPlaceBlock(Vector3 pos, int blockID)
         World_SetBlock(pos, oldBlock, true);
         return false;
     }
+
+    //Survival placement: the block comes out of the selected stack.
+    Inventory_Consume(blockID, 1);
 
     Network_Send(Packet_SetBlock(blockID, pos));
     return true;

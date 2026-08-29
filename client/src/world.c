@@ -16,6 +16,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include "kryon.h"
+#include "inventory.h"
 #include "stb_ds.h"
 #include "kryon.h"
 #include "world.h"
@@ -79,6 +80,9 @@ void World_LoadSingleplayer(void) {
 
     //Prevent multiplayer chunks from being unloaded during a singleplayer game which causes them to be saved locally.
     if (hmlen(world.chunks) != 0) return;
+
+    Inventory_Reset();
+    Inventory_Load("./world/player.dat");
 
     player.position = (Vector3) { 0, 80, 0 };
     Network_connectedToServer = false;
@@ -251,6 +255,9 @@ void World_Reload(void) {
 
 void World_Unload(void) {
     world.loadChunks = false;
+
+    //Keep the inventory with the world.
+    Inventory_Save("./world/player.dat");
 
     arrfree(world.generateChunksQueue);
     world.generateChunksQueue = NULL;
