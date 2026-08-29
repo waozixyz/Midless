@@ -11,11 +11,9 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
-#include <pthread.h>
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
+#include "kryon.h"
 #include "player.h"
 #include "world.h"
 #include "resource.h"
@@ -26,6 +24,9 @@
 
 
 void GameLoop(void);
+
+// Debug harness: MIDLESS_AUTOPLAY=1 jumps straight into a local world
+// with a visible cursor, for bring-up on a scratch X server.
 
 int main(void) {
 
@@ -38,23 +39,17 @@ int main(void) {
     SetWindowState(FLAG_WINDOW_ALWAYS_RUN);
     SetExitKey(0);
     SetTraceLogLevel(LOG_WARNING);
-    SetTargetFPS(60); 
+    SetTargetFPS(60);
+    InitUIDPI();
 
-    #if defined(PLATFORM_WEB)
-        char *chunkShaderVs = 
-            #include "chunk/shaders/chunk_shader_gl100.vs"
-        ;
-        char *chunkShaderFs = 
-            #include "chunk/shaders/chunk_shader_gl100.fs"
-        ;
-    #else
-        char *chunkShaderVs = 
-            #include "chunk/shaders/chunk_shader.vs"
-        ;
-        char *chunkShaderFs = 
-            #include "chunk/shaders/chunk_shader.fs"
-        ;
-    #endif
+    // The kryon raylib backend runs OpenGL ES 2 on desktop, so the GLSL 100
+    // shader pair is the only variant that compiles everywhere.
+    char *chunkShaderVs = 
+        #include "chunk/shaders/chunk_shader_gl100.vs"
+    ;
+    char *chunkShaderFs = 
+        #include "chunk/shaders/chunk_shader_gl100.fs"
+    ;
 
     Image midlessLogo = Resource_LoadImage("midless.png"); 
 
@@ -80,6 +75,16 @@ int main(void) {
     bool exitProgram = false;
     Screens_init(texture, &exitProgram);
 
+    const char *autoplay = getenv("MIDLESS_AUTOPLAY");
+    if (autoplay != NULL) {
+        World_LoadSingleplayer();
+        Screen_Switch(SCREEN_GAME);
+        // "2" keeps the gameplay input path (cursor locked); anything else
+        // shows the cursor for manual inspection.
+        if (strcmp(autoplay, "2") != 0)
+            EnableCursor();
+    }
+
 
     #if defined(PLATFORM_WEB)
         emscripten_set_main_loop(GameLoop, 0, 1);
@@ -102,6 +107,7 @@ int main(void) {
 
 void GameLoop(void) {
     Network_ReadQueue();
+
     
     // Update
     Player_Update();
@@ -127,7 +133,12 @@ void GameLoop(void) {
                 
         EndMode3D();
         
+        int uiW = GetScreenWidth();
+        int uiH = GetScreenHeight();
+        UpdateUIDPI(uiW, uiH);
+        BeginUIFrame(uiW, uiH, GetUIScale());
         Screen_Make();
+        EndUIFrame();
 
     EndDrawing();
 }

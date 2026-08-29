@@ -10,8 +10,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "raylib.h"
-#include "raymath.h"
+#include "kryon.h"
 #include "FastNoiseLite.h"
 #include "worldgenerator.h"
 #include "world.h"

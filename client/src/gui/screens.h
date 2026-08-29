@@ -8,19 +8,19 @@
 #ifndef G_SCREEN_H
 #define G_SCREEN_H
 
-typedef enum Screen {
+typedef enum GameScreen {
     SCREEN_GAME,
     SCREEN_PAUSE,
     SCREEN_LOADING,
     SCREEN_JOINING,
     SCREEN_LOGIN,
     SCREEN_OPTIONS
-} Screen;
+} GameScreen;
 
 extern bool Screen_cursorEnabled;
 
 void Screens_init(Texture2D terrain, bool *exit);
-void Screen_Switch(Screen screen);
+void Screen_Switch(GameScreen screen);
 
 void Screen_Make(void);
 

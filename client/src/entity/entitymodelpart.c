@@ -6,7 +6,7 @@
  */
 
 #include <string.h>
-#include "raylib.h"
+#include "kryon.h"
 #include "entitymodelpart.h"
 
 int vCount = 0;

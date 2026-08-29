@@ -6,8 +6,7 @@
  */
 
 #include <math.h>
-#include "raylib.h"
-#include "raymath.h"
+#include "kryon.h"
 #include "raycast.h"
 #include "world.h"
 #include "block.h"

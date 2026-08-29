@@ -8,7 +8,7 @@
 #ifndef G_WORLDGEN_H
 #define G_WORLDGEN_H
 
-#include "raylib.h"
+#include "kryon.h"
 #include "chunk.h"
 
 void WorldGenerator_Init(int worldSeed);

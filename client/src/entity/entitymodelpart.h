@@ -8,7 +8,7 @@
 #ifndef G_ENTITYMP_H
 #define G_ENTITYMP_H
 
-#include "raylib.h"
+#include "kryon.h"
 
 typedef struct EntityModelPart{
     Mesh mesh;

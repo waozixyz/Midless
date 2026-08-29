@@ -8,8 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "raylib.h"
-#include "raygui.h"
+#include "kryon.h"
 #include "chat.h"
 #include "screens.h"
 #include "player.h"
@@ -29,6 +28,8 @@ void Chat_AddLine(char *line) {
 
 
 char Chat_input[64] = "";
+int Chat_cursor = 0;
+int Chat_focused = 0;
 bool Chat_editMode = false;
 bool Chat_open = false;
 
@@ -81,7 +82,17 @@ void Chat_Draw(Vector2 offset, Color uiColor) {
     }
 
     //Chat input
-    if (Chat_editMode) GuiTextBox((Rectangle) { offset.x, offset.y + 22, chatWidth, 24 }, Chat_input, 64, Chat_editMode);
+    if (Chat_editMode) {
+        TextFieldProps chatField = {0};
+        chatField.bounds = (Rectangle) { offset.x, offset.y + 22, chatWidth, 24 };
+        chatField.text = Chat_input;
+        chatField.text_size = sizeof(Chat_input);
+        chatField.cursor_position = &Chat_cursor;
+        chatField.focused = &Chat_focused;
+        chatField.max_codepoints = 63;
+        chatField.font = GetUIFontSize();
+        TextField(chatField);
+    }
     
     if (IsKeyPressed(KEY_ENTER)) {
         if (Chat_open) {

@@ -8,8 +8,8 @@
 #include <limits.h>
 #include <stdio.h>
 #include <math.h>
-#include "raylib.h"
-#include "raymath.h"
+#include <stdlib.h>
+#include "kryon.h"
 #include "player.h"
 #include "world.h"
 #include "raycast.h"
@@ -47,6 +47,11 @@ void Player_Init(void) {
     Player_LastPositionPacketTime = 0;
 
     UpdateCamera(&player.camera, CAMERA_CUSTOM);
+
+    // Seed the look reference from the real pointer position so the first
+    // frame does not apply a giant (0,0)-to-cursor delta to the camera.
+    Player_oldMousePos = GetMousePosition();
+
     DisableCursor();
 }
 
@@ -82,7 +87,16 @@ void Player_CheckInputs() {
     mousePositionDelta.y = mousePos.y - Player_oldMousePos.y;
     
     Player_oldMousePos = GetMousePosition();
-    
+
+    static int dbg_cnt = 0;
+    static int dbg_on = -1;
+    if (dbg_on < 0) dbg_on = getenv("MIDLESS_DEBUG_INPUT") != NULL;
+    if (dbg_on && (dbg_cnt++ % 20) == 0) {
+        TraceLog(LOG_WARNING, "DBG pos=%.1f,%.1f delta=%.2f,%.2f angle=%.3f,%.3f",
+                 mousePos.x, mousePos.y, mousePositionDelta.x, mousePositionDelta.y,
+                 Player_cameraAngle.x, Player_cameraAngle.y);
+    }
+
     if (!Screen_cursorEnabled) {
         Player_cameraAngle.x -= (mousePositionDelta.x * -MOUSE_SENSITIVITY);
         Player_cameraAngle.y -= (mousePositionDelta.y * -MOUSE_SENSITIVITY);

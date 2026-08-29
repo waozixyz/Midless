@@ -2,8 +2,12 @@ midless.code-workspace
 .vscode/
 bin/
 *.o
-libs/*.c
-libs/*.h
-libs/*.a
+# Vendored single-file dependencies are tracked; everything else in libs/ is local drop-in.
+libs/*
+!libs/stb_ds.h
+!libs/FastNoiseLite.h
 *.html
 *.bat
+# Kryon build artifacts and local world saves
+build/
+world/

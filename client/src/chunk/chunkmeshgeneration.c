@@ -6,8 +6,7 @@
  */
 
 #include <stdio.h>
-#include "raylib.h"
-#include "raymath.h"
+#include "kryon.h"
 #include "chunkmeshgeneration.h"
 #include "chunklightning.h"
 #include "blockmeshgeneration.h"

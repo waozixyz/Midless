@@ -6,9 +6,7 @@
  */
 
 #include <stdlib.h>
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
+#include "kryon.h"
 #include "chunkmesh.h"
 #include "world.h"
 
@@ -17,7 +15,7 @@ void ChunkMesh_Upload(ChunkMesh *mesh, unsigned char *vertices, unsigned short *
     mesh->drawVertexCount = mesh->vertexCount;
     mesh->drawTriangleCount = mesh->triangleCount;
 
-    mesh->vboId = (unsigned int*)RL_CALLOC(MAX_CHUNKMESH_VERTEX_BUFFERS, sizeof(unsigned int));
+    mesh->vboId = (unsigned int*)calloc(MAX_CHUNKMESH_VERTEX_BUFFERS, sizeof(unsigned int));
 
     mesh->vaoId = 0;        
     mesh->vboId[0] = 0;
@@ -53,7 +51,7 @@ void ChunkMesh_Unload(ChunkMesh *mesh) {
     rlUnloadVertexArray(mesh->vaoId);
     for (int i = 0; i < MAX_CHUNKMESH_VERTEX_BUFFERS; i++) rlUnloadVertexBuffer(mesh->vboId[i]);
     
-    RL_FREE(mesh->vboId);
+    free(mesh->vboId);
     
 }
 

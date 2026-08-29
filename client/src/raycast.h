@@ -8,7 +8,7 @@
 #ifndef G_RAYCAST_H
 #define G_RAYCAST_H
 
-#include "raylib.h"
+#include "kryon.h"
 
 typedef struct RaycastResult {
     Vector3 hitPos;

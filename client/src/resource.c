@@ -1,4 +1,4 @@
-#include "raylib.h"
+#include "kryon.h"
 #include "resource.h"
 
 Image Resource_LoadImage(const char* fileName) {

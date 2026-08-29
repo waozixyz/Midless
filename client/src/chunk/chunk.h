@@ -8,7 +8,7 @@
 #ifndef G_CHUNK_H
 #define G_CHUNK_H
 
-#include "raylib.h"
+#include "kryon.h"
 #include "chunkmesh.h"
 
 #define CHUNK_SIZE_X 16

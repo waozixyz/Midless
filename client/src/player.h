@@ -8,7 +8,7 @@
 #ifndef G_PLAYER_H
 #define G_PLAYER_H
 
-#include "raylib.h"
+#include "kryon.h"
 #include "raycast.h"
 
 typedef struct Player{

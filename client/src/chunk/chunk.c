@@ -9,8 +9,7 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
-#include "raylib.h"
-#include "raymath.h"
+#include "kryon.h"
 #include "chunk.h"
 #include "chunklightning.h"
 #include "chunkmeshgeneration.h"

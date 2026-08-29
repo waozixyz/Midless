@@ -15,10 +15,9 @@
 #include <pthread.h>
 #include <time.h>
 #include <sys/stat.h>
-#include "raylib.h"
+#include "kryon.h"
 #include "stb_ds.h"
-#include "rlgl.h"
-#include "raymath.h"
+#include "kryon.h"
 #include "world.h"
 #include "worldgenerator.h"
 #include "player.h"

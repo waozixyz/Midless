@@ -8,7 +8,7 @@
 #ifndef G_BLOCKFACEHELPER_H
 #define G_BLOCKFACEHELPER_H
 
-#include "raylib.h"
+#include "kryon.h"
 #include "block.h"
 #include "chunk.h"
 #include "chunkmesh.h"

@@ -3,6 +3,23 @@
 
 Midless is a free and open-source voxel game made in C.
 
+> **Kryon port fork** (woazixyz): this fork runs the client on
+> [kryon](https://github.com/kryonlabs/kryon) instead of linking raylib
+> directly. The chunk renderer uses kryon's 3D surface tier (curated rlgl
+> entry points + raymath-style math3d); the menus use the kryon UI toolkit.
+> The desktop build targets OpenGL ES 2 with the GLSL 100 shader pair.
+> Networking transports (ENet/WebSocket) and the server are not part of
+> this build yet; singleplayer local worlds work.
+>
+> Build: `git submodule update --init --recursive`, then `make` (binary in
+> `build/bin/linux/`, run it from a directory containing `textures/`, e.g.
+> `cd client/bin && ../../build/bin/linux/midless-linux-*`).
+> Debug aids: `MIDLESS_AUTOPLAY=1` starts straight in a local world with a
+> visible cursor, `MIDLESS_AUTOPLAY=2` keeps the gameplay cursor lock,
+> `MIDLESS_DEBUG_INPUT=1` logs look-control state.
+>
+> Everything below is the original upstream readme.
+
 ## Controls
 
 | Input                        | Action                |

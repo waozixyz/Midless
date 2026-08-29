@@ -5,8 +5,7 @@
  * https://opensource.org/licenses/MIT
  */
 
-#include "raylib.h"
-#include "raymath.h"
+#include "kryon.h"
 #include "entity.h"
 
 void Entity_Draw(Entity *entity) {

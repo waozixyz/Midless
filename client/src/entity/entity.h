@@ -8,7 +8,7 @@
 #ifndef G_ENTITY_H
 #define G_ENTITY_H
 
-#include "raylib.h"
+#include "kryon.h"
 #include "entitymodel.h"
 
 typedef struct Entity{

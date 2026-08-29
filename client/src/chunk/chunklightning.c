@@ -7,8 +7,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include "raylib.h"
-#include "raymath.h"
+#include "kryon.h"
 #include "stb_ds.h"
 #include "chunklightning.h"
 #include "block.h"
