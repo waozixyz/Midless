@@ -15,8 +15,12 @@ InvItem Inventory_held = { 0 };
 int Inventory_hotbar = 0;
 bool Inventory_open = false;
 
+//Luanti-style crafting grid (items stay put when the menu closes).
+static InvItem craftGrid[CRAFT_GRID_CELLS];
+
 void Inventory_Reset(void) {
     memset(Inventory_slots, 0, sizeof(Inventory_slots));
+    memset(craftGrid, 0, sizeof(craftGrid));
     Inventory_held = (InvItem) { 0 };
     Inventory_hotbar = 0;
 }
@@ -182,16 +186,27 @@ static void DrawCraftingList(Texture2D terrain, int x, int y, int w) {
         DrawText(title, x + rowH - 4, rowY + 4, 14, tint);
 
         char needs[128] = "";
-        for (int ing = 0; ing < recipe.ingredientCount; ing++) {
-            Block ingDef = Block_GetDefinition(recipe.ingredients[ing].block);
+        int listed[9] = { 0 };
+        for (int ing = 0; ing < CRAFT_GRID_CELLS; ing++) {
+            int ingBlock = recipe.pattern[ing];
+            if (ingBlock == 0 || listed[ing]) continue;
+            int same = 0;
+            for (int j = 0; j < CRAFT_GRID_CELLS; j++) {
+                if (recipe.pattern[j] == ingBlock) {
+                    listed[j] = 1;
+                    same++;
+                }
+            }
+            Block ingDef = Block_GetDefinition(ingBlock);
             char part[48];
             snprintf(part, sizeof(part), "%s%s x%d",
-                     ing > 0 ? ", " : "",
+                     needs[0] != '\0' ? ", " : "",
                      ingDef.name,
-                     recipe.ingredients[ing].count);
+                     same);
             strncat(needs, part, sizeof(needs) - strlen(needs) - 1);
         }
-        DrawText(needs, x + rowH - 4, rowY + 22, 12,
+        DrawText(recipe.shapeless ? TextFormat("%s  [anywhere]", needs) : needs,
+                 x + rowH - 4, rowY + 22, 12,
                  can ? (Color) { 200, 200, 200, 220 } : (Color) { 130, 130, 130, 140 });
 
         if (can && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -238,6 +253,78 @@ void Inventory_Draw(Texture2D terrain, int screenWidth, int screenHeight) {
     }
 
     DrawCraftingList(terrain, gridX - 300, gridY, 280);
+
+    //Luanti-style 3x3 crafting grid with a result slot.
+    int craftX = gridX + gridW + 24;
+    int craftCell = 44;
+    int cells[CRAFT_GRID_CELLS];
+    for (int i = 0; i < CRAFT_GRID_CELLS; i++) cells[i] = craftGrid[i].count > 0 ? craftGrid[i].blockID : 0;
+    int match = Crafting_MatchGrid(cells);
+
+    DrawText("Craft", craftX, gridY - 26, 18, WHITE);
+    for (int r = 0; r < 3; r++) {
+        for (int c = 0; c < 3; c++) {
+            int index = r * 3 + c;
+            int x = craftX + c * (craftCell + 4);
+            int y = gridY + r * (craftCell + 4);
+            DrawSlot(terrain, &craftGrid[index], x, y, craftCell, false);
+
+            Vector2 mouse = GetMousePosition();
+            if (!CheckCollisionPointRec(mouse, (Rectangle) { x, y, craftCell, craftCell })) continue;
+
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                if (Inventory_held.count > 0) {
+                    //Place exactly one from the cursor (Luanti drag feel).
+                    if (craftGrid[index].count <= 0) {
+                        craftGrid[index].blockID = Inventory_held.blockID;
+                        craftGrid[index].count = 1;
+                        Inventory_held.count--;
+                    } else if (craftGrid[index].blockID == Inventory_held.blockID &&
+                               craftGrid[index].count < INV_STACK_MAX) {
+                        craftGrid[index].count++;
+                        Inventory_held.count--;
+                    }
+                    if (Inventory_held.count == 0) Inventory_held.blockID = 0;
+                } else if (craftGrid[index].count > 0) {
+                    //Take the whole cell back.
+                    Inventory_held = craftGrid[index];
+                    craftGrid[index] = (InvItem) { 0 };
+                }
+            }
+        }
+    }
+
+    //Result slot.
+    int resultX = craftX + 3 * (craftCell + 4) + 28;
+    int resultY = gridY + craftCell / 2;
+    Recipe matched = match >= 0 ? Crafting_Get(match) : (Recipe) { 0 };
+    InvItem resultItem = { 0 };
+    if (match >= 0) {
+        resultItem.blockID = matched.resultBlock;
+        resultItem.count = matched.resultCount;
+    }
+    DrawSlot(terrain, &resultItem, resultX, resultY, 56, false);
+    DrawText("->", craftX + 3 * (craftCell + 4) + 2, resultY + 18, 20, WHITE);
+
+    if (match >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        Vector2 mouse = GetMousePosition();
+        if (CheckCollisionPointRec(mouse, (Rectangle) { resultX, resultY, 56, 56 })) {
+            if (Inventory_held.count <= 0) {
+                Inventory_held = resultItem;
+            } else if (Inventory_held.blockID == resultItem.blockID &&
+                       Inventory_held.count + resultItem.count <= INV_STACK_MAX) {
+                Inventory_held.count += resultItem.count;
+            } else {
+                Inventory_Add(resultItem.blockID, resultItem.count);
+            }
+            for (int i = 0; i < CRAFT_GRID_CELLS; i++) {
+                if (craftGrid[i].count > 0) {
+                    craftGrid[i].count--;
+                    if (craftGrid[i].count == 0) craftGrid[i].blockID = 0;
+                }
+            }
+        }
+    }
 
     //Held stack follows the cursor.
     if (Inventory_held.count > 0) {

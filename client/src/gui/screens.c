@@ -83,6 +83,15 @@ void Screen_MakeGame(void) {
     DrawRectangle(screenWidth / 2 - 2, screenHeight / 2 + 2,  4, 6, uiColBg);
     DrawRectangle(screenWidth / 2 - 2, screenHeight / 2 - 8,  4, 6, uiColBg);
 
+    //Mining progress bar while holding the left button on a block.
+    if (player.breaking && player.breakProgress > 0.0f && player.rayResult.hitBlockID > 0) {
+        int barW = 48;
+        int barX = screenWidth / 2 - barW / 2;
+        int barY = screenHeight / 2 + 26;
+        DrawRectangle(barX - 2, barY - 2, barW + 4, 10, (Color) { 0, 0, 0, 140 });
+        DrawRectangle(barX, barY, (int)(barW * player.breakProgress), 6, WHITE);
+    }
+
     //Hotbar + inventory/crafting overlay
     Inventory_Draw(mapTerrain, screenWidth, screenHeight);
 

@@ -45,6 +45,10 @@ void Player_Init(void) {
 
     Inventory_Reset();
 
+    player.breakTarget = (Vector3) { 0 };
+    player.breakProgress = 0;
+    player.breaking = false;
+
     Player_LastPositionPacketTime = 0;
 
     UpdateCamera(&player.camera, CAMERA_CUSTOM);
@@ -67,6 +71,8 @@ void Player_CheckInputs() {
             Screen_Switch(SCREEN_PAUSE);
         }
         Screen_cursorEnabled = !Screen_cursorEnabled;
+    } else if (IsKeyPressed(KEY_F11)) {
+        ToggleFullscreen();
     } else if (IsKeyPressed(KEY_E) && !Chat_open) {
         if (!Screen_cursorEnabled) {
             Inventory_open = true;
@@ -170,13 +176,41 @@ void Player_CheckInputs() {
         
         player.rayResult = Raycast_Do(player.camera.position, (Vector3) { forwardX, forwardY, forwardZ}, true);
 
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) { //Break Block
-            if (player.rayResult.hitBlockID > 0) {
-                Inventory_Add(player.rayResult.hitBlockID, 1);
-                World_SetBlock(player.rayResult.hitPos, 0, true);
-                Network_Send(Packet_SetBlock(0, player.rayResult.hitPos));
+        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) { //Mine Block (hold)
+            int targetX = (int)floor(player.rayResult.hitPos.x);
+            int targetY = (int)floor(player.rayResult.hitPos.y);
+            int targetZ = (int)floor(player.rayResult.hitPos.z);
+            bool sameTarget = player.breaking &&
+                (int)player.breakTarget.x == targetX &&
+                (int)player.breakTarget.y == targetY &&
+                (int)player.breakTarget.z == targetZ;
+
+            if (!sameTarget) {
+                player.breakTarget = (Vector3) { targetX, targetY, targetZ };
+                player.breakProgress = 0;
+                player.breaking = true;
             }
-        } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) { //Place Block
+
+            if (player.rayResult.hitBlockID > 0) {
+                float breakTime = Player_BlockBreakTime(player.rayResult.hitBlockID);
+                player.breakProgress += GetFrameTime() / (breakTime > 0.01f ? breakTime : 0.01f);
+
+                if (player.breakProgress >= 1.0f) {
+                    Inventory_Add(player.rayResult.hitBlockID, 1);
+                    World_SetBlock(player.rayResult.hitPos, 0, true);
+                    Network_Send(Packet_SetBlock(0, player.rayResult.hitPos));
+                    player.breakProgress = 0;
+                    player.breaking = false;
+                }
+            } else {
+                player.breakProgress = 0;
+                player.breaking = false;
+            }
+        } else {
+            player.breakProgress = 0;
+            player.breaking = false;
+        }
+        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) { //Place Block
             Vector3 placePos = Vector3Add(player.rayResult.hitPos, player.rayResult.normal);
             
             int placeBlock = Inventory_SelectedBlock();
@@ -224,6 +258,26 @@ void Player_CheckInputs() {
     player.camera.target.z = player.camera.position.z + forwardZ;
 }
 
+//Seconds to break a block bare-handed; Luanti-style per-block hardness.
+float Player_BlockBreakTime(int blockID) {
+    switch (blockID) {
+        case 1: return 1.5f;    // stone
+        case 7: return 2.0f;    // iron ore
+        case 8: return 1.8f;    // coal ore
+        case 9: return 2.2f;    // gold ore
+        case 10: return 0.9f;   // log
+        case 4: return 0.7f;    // wood
+        case 17: return 0.9f;   // stone slab
+        case 18: return 0.5f;   // wood slab
+        case 14: return 0.25f;  // glass
+        case 11: return 0.15f;  // leaves
+        case 12: return 0.05f;  // rose
+        case 13: return 0.05f;  // dandelion
+        case 15: return 0.05f;  // fire
+        default: return 0.45f;  // dirt, grass, sand, ...
+    }
+}
+
 bool Player_TryPlaceBlock(Vector3 pos, int blockID)
 {
     int oldBlock = World_GetBlock(pos);
@@ -248,6 +302,12 @@ void Player_Update(void) {
     if(GetTime() - Player_LastPositionPacketTime > 0.05) {
         Network_Send(Packet_PlayerPosition((Vector3) { player.position.x + 0.5f, player.position.y, player.position.z + 0.5f }, (Vector2) { -Player_cameraAngle.x + PI / 2,  Player_cameraAngle.y - PI / 2}));
         Player_LastPositionPacketTime = GetTime();
+    }
+
+    //Fell out of the world: respawn at the spawn point.
+    if (player.position.y < -64.0f) {
+        player.position = (Vector3) { 0, 80, 0 };
+        player.velocity = (Vector3) { 0 };
     }
 
     //Gravity

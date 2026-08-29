@@ -21,11 +21,18 @@ typedef struct Player{
     RaycastResult rayResult;
     int blockSelected;
     bool canJump;
+
+    //Hold-to-mine progress on the current target block.
+    Vector3 breakTarget;
+    float breakProgress;
+    bool breaking;
 } Player;
 extern Player player;
 
 //Initialize a player.
 void Player_Init(void);
+
+float Player_BlockBreakTime(int blockID);
 
 //Check/Do Inputs
 void Player_CheckInputs(void);
