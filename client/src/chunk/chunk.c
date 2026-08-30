@@ -11,6 +11,7 @@
 #include <time.h>
 #include "kryon.h"
 #include "chunk.h"
+#include "player.h"
 #include "chunklightning.h"
 #include "chunkmeshgeneration.h"
 #include "chunkmesh.h"
@@ -149,6 +150,7 @@ void Chunk_Generate(Chunk *chunk) {
 
 
 void Chunk_SetBlock(Chunk *chunk, Vector3 pos, int blockID) {
+    if (Game_DebugLog()) fprintf(stderr, "WD ChunkSetBlock enter\n");
     if (Chunk_IsValidPos(pos)) {
         int index = Chunk_PosToIndex(pos);
 
@@ -157,13 +159,18 @@ void Chunk_SetBlock(Chunk *chunk, Vector3 pos, int blockID) {
 
         Block blockDef = Block_GetDefinition(blockID);
         if (blockDef.lightType == BlockLightType_Emit) {
+            if (Game_DebugLog()) fprintf(stderr, "WD addlight\n");
             Chunk_AddLightSource(chunk,pos, 15, false);
         } else {
+            if (Game_DebugLog()) fprintf(stderr, "WD removelight enter\n");
             Chunk_RemoveLightSource(chunk,pos);
+            if (Game_DebugLog()) fprintf(stderr, "WD removesun enter\n");
             Chunk_RemoveSunlight(chunk,pos);
+            if (Game_DebugLog()) fprintf(stderr, "WD removesun done\n");
         }
 
     }
+    if (Game_DebugLog()) fprintf(stderr, "WD ChunkSetBlock done\n");
 }
 
 int Chunk_GetBlock(Chunk *chunk, Vector3 pos) {

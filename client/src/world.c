@@ -117,6 +117,8 @@ void World_Update(void) {
 }
 
 void World_ReadChunksQueues(void) {
+        static unsigned long rcq_n = 0;
+        if (Game_DebugLog() && (++rcq_n & 0xFFFF) == 0) fprintf(stderr, "WD rcq=%lu\n", rcq_n);
 
         if (world.loadChunks == true) {
 
@@ -420,7 +422,8 @@ void World_FastBlock(Vector3 blockPos, int blockID) {
 }
 
 void World_SetBlock(Vector3 blockPos, int blockID, bool immediate) {
-    
+    if (Game_DebugLog()) fprintf(stderr, "WD SetBlock enter\n");
+
     //Get Chunk
     Vector3 chunkPos = (Vector3) { floor(blockPos.x / CHUNK_SIZE_X), floor(blockPos.y / CHUNK_SIZE_Y), floor(blockPos.z / CHUNK_SIZE_Z) };
     Chunk* chunk = World_GetChunkAt(chunkPos);

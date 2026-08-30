@@ -150,8 +150,10 @@ void Chunk_DoSunlight(Chunk *srcChunk) {
 }
 
 void Chunk_SpreadLight(bool sunlight) {
+    static unsigned long sl_n = 0;
     int limit = 20000;
     while (arrlen(lightQueue) > 0  && limit-- > 0) {
+        if ((++sl_n & 0xFFFFF) == 0) fprintf(stderr, "WD spread=%lu\n", sl_n);
         //Get and remove first item in Queue
         int index = lightQueue[0].index;
         Chunk *chunk = lightQueue[0].chunk;
@@ -193,8 +195,10 @@ void Chunk_SpreadLight(bool sunlight) {
 }
 
 void Chunk_UpdateLight(bool sunlight) {
+   static unsigned long ul_n = 0;
    int limit = 20000;
    while (arrlen(lightDelQueue) > 0 && limit-- > 0) {
+        if ((++ul_n & 0xFFFFF) == 0) fprintf(stderr, "WD update=%lu\n", ul_n);
 
         //Get and remove first item in Queue
         Chunk *chunk = lightDelQueue[0].chunk;

@@ -111,7 +111,7 @@ void Screen_MakePause(void) {
     if (StyledButton(offsetX , offsetY + (index++ * 35), 200, 30, "Continue", ButtonStylePrimary, 0, NULL)) {
         Screen_Switch(SCREEN_GAME);
         Screen_cursorEnabled = false;
-        DisableCursor();
+        Game_SetCursorCaptured(true);
     }
 
     //Options Button
@@ -228,7 +228,7 @@ void Screen_MakeLogin(void) {
     //Play button (local world)
     if (StyledButton(offsetX - 80, offsetY + 55, 160, 30, "Play", ButtonStylePrimary, 0, NULL)) {
         Screen_Switch(SCREEN_LOADING);
-        DisableCursor();
+        Game_SetCursorCaptured(true);
     }
 
 }

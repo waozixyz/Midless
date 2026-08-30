@@ -34,6 +34,10 @@ void Player_Init(void);
 
 float Player_BlockBreakTime(int blockID);
 
+//Capture for gameplay unless KATALIS_NO_CAPTURE is set (scratch X servers).
+void Game_SetCursorCaptured(bool captured);
+int Game_DebugLog(void);
+
 //Check/Do Inputs
 void Player_CheckInputs(void);
 

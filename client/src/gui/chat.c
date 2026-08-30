@@ -108,7 +108,7 @@ void Chat_Draw(Vector2 offset, Color uiColor) {
             }
             Chat_open = false;
             Screen_cursorEnabled = false;
-            DisableCursor();
+            Game_SetCursorCaptured(true);
         }
     }
 

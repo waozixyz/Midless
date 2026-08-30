@@ -64,14 +64,14 @@ void Player_CheckInputs() {
         if (Inventory_open) {
             Inventory_open = false;
             Screen_cursorEnabled = false;
-            DisableCursor();
+            Game_SetCursorCaptured(true);
         } else if (Screen_cursorEnabled) {
             Chat_open = false;
             Screen_Switch(SCREEN_GAME);
-            DisableCursor();
+            Game_SetCursorCaptured(true);
         } else {
             Screen_Switch(SCREEN_PAUSE);
-            EnableCursor();
+            Game_SetCursorCaptured(false);
         }
         Screen_cursorEnabled = !Screen_cursorEnabled;
     } else if (IsKeyPressed(KEY_F11)) {
@@ -80,21 +80,21 @@ void Player_CheckInputs() {
         if (!Screen_cursorEnabled) {
             Inventory_open = true;
             Screen_cursorEnabled = true;
-            EnableCursor();
+            Game_SetCursorCaptured(false);
         } else if (Inventory_open) {
             Inventory_open = false;
             Screen_cursorEnabled = false;
-            DisableCursor();
+            Game_SetCursorCaptured(true);
         }
     } else if (IsKeyPressed(KEY_T)) {
         if (Screen_cursorEnabled && !Chat_open) {
             Screen_cursorEnabled = false;
             Screen_Switch(SCREEN_GAME);
-            DisableCursor();
+            Game_SetCursorCaptured(true);
         } else {
             Chat_open = true;
             Screen_cursorEnabled = true;
-            EnableCursor();
+            Game_SetCursorCaptured(false);
         }
     }
     
@@ -218,6 +218,7 @@ void Player_CheckInputs() {
             player.breaking = false;
         }
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) { //Place Block
+            if (Game_DebugLog()) fprintf(stderr, "WD rmb fired\n");
             Vector3 placePos = Vector3Add(player.rayResult.hitPos, player.rayResult.normal);
             
             int placeBlock = Inventory_SelectedBlock();
@@ -266,6 +267,20 @@ void Player_CheckInputs() {
 }
 
 //Seconds to break a block bare-handed; Luanti-style per-block hardness.
+int Game_DebugLog(void) {
+    static int on = -1;
+    if (on < 0) on = getenv("KATALIS_DEBUG_INPUT") != NULL;
+    return on;
+}
+
+void Game_SetCursorCaptured(bool captured) {
+    static int noCapture = -1;
+    if (noCapture < 0) noCapture = getenv("KATALIS_NO_CAPTURE") != NULL;
+    if (captured && noCapture) return;   // keep the cursor visible/driveable
+    if (captured) DisableCursor();
+    else EnableCursor();
+}
+
 float Player_BlockBreakTime(int blockID) {
     switch (blockID) {
         case 1: return 1.5f;    // stone

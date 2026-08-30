@@ -13,8 +13,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <signal.h>
+#include <unistd.h>
+#include <execinfo.h>
 #include "kryon.h"
 #include "player.h"
+#include "inventory.h"
 #include "world.h"
 #include "resource.h"
 #include "screens.h"
@@ -25,6 +29,24 @@
 
 void GameLoop(void);
 
+//Hang watchdog: each frame refreshes a 3 s alarm. If a frame ever stops
+//completing, the handler dumps the stuck call stack to stderr so the
+// offending loop can be identified from the log without a debugger.
+static void HangWatchdog(int sig) {
+    (void)sig;
+    void *frames[32];
+    int n = backtrace(frames, 32);
+    backtrace_symbols_fd(frames, n, 2);
+    _exit(70);
+}
+
+static void HangWatchdogInit(void) {
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = HangWatchdog;
+    sigaction(SIGALRM, &sa, NULL);
+}
+
 
 int main(void) {
 
@@ -33,6 +55,7 @@ int main(void) {
 
     // Initialization
     InitWindow(screenWidth, screenHeight, "Katalis");
+    HangWatchdogInit();
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetWindowState(FLAG_WINDOW_ALWAYS_RUN);
     SetExitKey(0);
@@ -78,7 +101,7 @@ int main(void) {
     // from the pause menu. Capture the mouse for FPS-style look control.
     World_LoadSingleplayer();
     Screen_Switch(SCREEN_GAME);
-    DisableCursor();
+    Game_SetCursorCaptured(true);
 
 
     #if defined(PLATFORM_WEB)
@@ -101,12 +124,21 @@ int main(void) {
 }
 
 void GameLoop(void) {
+    alarm(3);
+    static unsigned long dbgFrame = 0;
+    static double dbgT0 = 0;
+    double stageT = GetTime();
+    if (dbgT0 == 0) dbgT0 = stageT;
+
     Network_ReadQueue();
+    double tNet = GetTime();
 
     
     // Update
     Player_Update();
+    double tPlayer = GetTime();
     World_Update();
+    double tWorld = GetTime();
     
     Vector3 selectionBoxPos = (Vector3) { floor(player.rayResult.hitPos.x) + 0.5f, floor(player.rayResult.hitPos.y), floor(player.rayResult.hitPos.z) + 0.5f};
     
@@ -128,12 +160,24 @@ void GameLoop(void) {
                 
         EndMode3D();
         
+        double tUpdateAll = GetTime();
         int uiW = GetScreenWidth();
         int uiH = GetScreenHeight();
         UpdateUIDPI(uiW, uiH);
         BeginUIFrame(uiW, uiH, GetUIScale());
         Screen_Make();
+        double tUi = GetTime();
         EndUIFrame();
 
     EndDrawing();
+
+    dbgFrame++;
+    if (GetTime() - dbgT0 > 2.0) {
+        fprintf(stderr, "DBG frame=%lu net=%.4f player=%.4f world=%.4f preui=%.4f ui=%.4f total=%.4f hit=%d sel=%d camy=%.1f pgy=%.1f\n",
+                dbgFrame, tNet - stageT, tPlayer - tNet, tWorld - tPlayer,
+                tUpdateAll - tWorld, tUi - tUpdateAll, GetTime() - stageT,
+                player.rayResult.hitBlockID, Inventory_SelectedBlock(),
+                0.0f, player.position.y);
+        dbgT0 = GetTime();
+    }
 }
