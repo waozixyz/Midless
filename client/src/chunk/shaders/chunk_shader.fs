@@ -29,5 +29,6 @@
 "   vec4 origin = vec4(0,0,0,0);"
 "   float d = distance(origin, vertPos);"
 "   float alpha = getFog(d);"
-"   finalColor = (texelColor*clamp(sunFragColor * sunlightStrength + fragColor, vec4(0.1, 0.1, 0.1, 1), vec4(1,1,1,1))) * (1.0 - alpha);"
+"   vec4 litColor = texelColor*clamp(sunFragColor * sunlightStrength + fragColor, vec4(0.1, 0.1, 0.1, 1), vec4(1,1,1,1));"
+"   finalColor = vec4(mix(litColor.rgb, skyColor, alpha), litColor.a);"
 "}"

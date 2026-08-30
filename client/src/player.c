@@ -23,7 +23,7 @@
 #define MOUSE_SENSITIVITY 0.003f
 
 Vector2 Player_oldMousePos = {0.0f, 0.0f};
-Vector2 Player_cameraAngle = {0.0f, 0.0f};
+Vector2 Player_cameraAngle = {0.0f, PI / 2.0f};
 double Player_LastPositionPacketTime;
 Player player;
 
@@ -39,6 +39,7 @@ void Player_Init(void) {
     player.velocity = (Vector3) {0, 0, 0};
     player.position = (Vector3) { 0, 80, 0 };
     player.speed = 0.125f / 6;
+    Player_cameraAngle = (Vector2){0.0f, PI / 2.0f};
     
     player.collisionBox.min = (Vector3) { 0.2f, 0, 0.2f };
     player.collisionBox.max = (Vector3) { 0.8f, 1.5f, 0.8f };

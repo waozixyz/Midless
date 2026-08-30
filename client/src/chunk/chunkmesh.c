@@ -65,19 +65,25 @@ void ChunkMesh_Unload(ChunkMesh *mesh) {
 void ChunkMesh_PrepareDrawing(Material mat) {
     rlEnableShader(mat.shader.id);
 
-    // Pin the atlas to texture unit 0 and point the shader sampler at it
-    // explicitly: rlEnableTexture binds on whatever unit is active, so
-    // relying on the sampler defaulting to 0 breaks on drivers where
-    // earlier rendering leaves another unit active (terrain renders black).
+    // Pin the atlas to texture unit 0 and point the shader sampler at that
+    // unit. Samplers take texture units, not texture object ids.
     rlActiveTextureSlot(0);
     rlEnableTexture(mat.maps[0].texture.id);
-    SetShaderValueTexture(mat.shader, GetShaderLocation(mat.shader, "texture0"), mat.maps[0].texture);
+    int textureUnit = 0;
+    rlSetUniform(rlGetLocationUniform(mat.shader.id, "texture0"), &textureUnit, RL_SHADER_UNIFORM_INT, 1);
 
     float drawDistance = (world.drawDistance + 2) * 16.0f;
     rlSetUniform(rlGetLocationUniform(mat.shader.id, "drawDistance"), &drawDistance, RL_SHADER_UNIFORM_FLOAT, 1);
 
     float sunlightStrength = World_GetSunlightStrength();
     rlSetUniform(rlGetLocationUniform(mat.shader.id, "sunlightStrength"), &sunlightStrength, RL_SHADER_UNIFORM_FLOAT, 1);
+
+    float skyColor[3] = {
+        (140.0f * sunlightStrength) / 255.0f,
+        (210.0f * sunlightStrength) / 255.0f,
+        (240.0f * sunlightStrength) / 255.0f
+    };
+    rlSetUniform(rlGetLocationUniform(mat.shader.id, "skyColor"), skyColor, RL_SHADER_UNIFORM_VEC3, 1);
 }
 
 void ChunkMesh_FinishDrawing(void) {

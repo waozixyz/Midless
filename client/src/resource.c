@@ -13,6 +13,7 @@ Image Resource_LoadImage(const char* fileName) {
 
 Texture2D Resource_LoadTexture(const char* fileName) {
     Image image = Resource_LoadImage(fileName);
+    ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
     Texture2D texture = LoadTextureFromImage(image);
     UnloadImage(image);
 
