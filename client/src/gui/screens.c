@@ -233,15 +233,23 @@ void Screen_MakeLogin(void) {
 
 }
 
-bool loadingNextFrame = false;
+bool loadingStarted = false;
 void Screen_MakeLoading(void) {
     DrawRectangle(0, 0, screenWidth, screenHeight, BLACK);
-    DrawText("Loading World", screenWidth / 2 - 80, screenHeight / 2, 20, WHITE);
-    if(loadingNextFrame) {
+
+    if (!loadingStarted) {
+        loadingStarted = true;
         World_LoadSingleplayer();
-        loadingNextFrame = false;
     }
-    loadingNextFrame = true;
+    const char *loadText = TextFormat("Loading World... %i", World_QueueRemaining());
+    DrawText(loadText, screenWidth / 2 - MeasureText(loadText, 20) / 2, screenHeight / 2, 20, WHITE);
+
+    if (World_SpawnReady()) {
+        World_FindSpawnPosition();
+        Game_SetCursorCaptured(true);
+        Screen_cursorEnabled = false;
+        Screen_Switch(SCREEN_GAME);
+    }
 }
 
 void Screen_Make(void) {
@@ -266,4 +274,5 @@ void Screen_Make(void) {
 
 void Screen_Switch(GameScreen screen) {
     Screen_Current = screen;
+    if (screen == SCREEN_LOADING) loadingStarted = false;
 }

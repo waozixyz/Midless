@@ -320,7 +320,10 @@ bool Player_TryPlaceBlock(Vector3 pos, int blockID)
 
 
 void Player_Update(void) {
-    
+    //The player only exists physically while the game scene is active -
+    //no falling or drifting behind the loading screen or pause menu.
+    if (Screen_Current != SCREEN_GAME) return;
+
     if(GetTime() - Player_LastPositionPacketTime > 0.05) {
         Network_Send(Packet_PlayerPosition((Vector3) { player.position.x + 0.5f, player.position.y, player.position.z + 0.5f }, (Vector2) { -Player_cameraAngle.x + PI / 2,  Player_cameraAngle.y - PI / 2}));
         Player_LastPositionPacketTime = GetTime();

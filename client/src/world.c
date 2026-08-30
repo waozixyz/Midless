@@ -86,14 +86,34 @@ void World_LoadSingleplayer(void) {
 
     player.position = (Vector3) { 0, 80, 0 };
     Network_connectedToServer = false;
-    Screen_Switch(SCREEN_GAME);
     world.loadChunks = true;
     World_LoadChunks();
 
-    //Build all chunks at the beginning
-    while(arrlen(world.generateChunksQueue) != 0) {
-        World_ReadChunksQueues();
+    //Chunks stream in through World_Update while the loading screen is
+    //shown; the player spawns on the surface once the scene is ready.
+}
+
+int World_QueueRemaining(void) {
+    return arrlen(world.generateChunksQueue);
+}
+
+bool World_SpawnReady(void) {
+    return world.loadChunks && arrlen(world.generateChunksQueue) == 0;
+}
+
+//Stand the player on the first solid surface of the spawn column instead
+//of a fixed height that can be mid-air or buried inside terrain.
+void World_FindSpawnPosition(void) {
+    for (int y = CHUNK_SIZE_Y * 8; y > 0; y--) {
+        Block block = Block_GetDefinition(World_GetBlock((Vector3) { 0, y, 0 }));
+        if (block.colliderType == BlockColliderType_Solid && Block_IsFullSize(&block)) {
+            player.position = (Vector3) { 0, y + 1, 0 };
+            player.velocity = (Vector3) { 0 };
+            return;
+        }
     }
+    player.position = (Vector3) { 0, 80, 0 };
+    player.velocity = (Vector3) { 0 };
 }
 
 clock_t updateClock;
@@ -108,10 +128,18 @@ void World_Update(void) {
 
     // Generate/mesh up to 4 chunks per frame, but stop early once ~6 ms
     // of the frame budget is spent so chunk work cannot cause long frames.
-    double meshDeadline = GetTime() + 0.006;
-    for (int i = 0; i < 4; i++) {
-        if (i > 0 && GetTime() >= meshDeadline) break;
-        World_ReadChunksQueues();
+    // While the loading screen is up there is no scene to keep smooth, so
+    // spend a much larger slice to bring the world up quickly.
+    double meshDeadline = GetTime() + (Screen_Current == SCREEN_LOADING ? 0.030 : 0.006);
+    if (Screen_Current == SCREEN_LOADING) {
+        while (arrlen(world.generateChunksQueue) != 0 && GetTime() < meshDeadline) {
+            World_ReadChunksQueues();
+        }
+    } else {
+        for (int i = 0; i < 4; i++) {
+            if (i > 0 && GetTime() >= meshDeadline) break;
+            World_ReadChunksQueues();
+        }
     }
     
 }

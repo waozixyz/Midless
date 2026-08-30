@@ -97,11 +97,9 @@ int main(void) {
     bool exitProgram = false;
     Screens_init(texture, &exitProgram);
 
-    // Launch directly into a local world; the title screen stays reachable
-    // from the pause menu. Capture the mouse for FPS-style look control.
-    World_LoadSingleplayer();
-    Screen_Switch(SCREEN_GAME);
-    Game_SetCursorCaptured(true);
+    // Boot straight into a local world behind the loading screen; the
+    // player spawns and the scene shows only once the world has rendered.
+    Screen_Switch(SCREEN_LOADING);
 
 
     #if defined(PLATFORM_WEB)
@@ -148,7 +146,8 @@ void GameLoop(void) {
         float sunlightStrength = World_GetSunlightStrength();
         ClearBackground((Color) { 140 * sunlightStrength, 210 * sunlightStrength, 240 * sunlightStrength, 255});
 
-        BeginMode3D(player.camera);
+        if (Screen_Current != SCREEN_LOADING) BeginMode3D(player.camera);
+        if (Screen_Current != SCREEN_LOADING) {
             World_Draw(player.camera.position);
             if (player.rayResult.hitBlockID != -1) {
                 Block block = Block_GetDefinition(player.rayResult.hitBlockID);
@@ -158,7 +157,8 @@ void GameLoop(void) {
                 DrawCube(selectionBoxPos, blockSize.x + 0.02f, blockSize.y + 0.02f, blockSize.z + 0.02f, (Color){255, 255, 255, 40});
             }
                 
-        EndMode3D();
+        }
+        if (Screen_Current != SCREEN_LOADING) EndMode3D();
         
         double tUpdateAll = GetTime();
         int uiW = GetScreenWidth();

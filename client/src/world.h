@@ -37,6 +37,9 @@ void World_Init(void);
 void World_LoadMultiplayer(void);
 //Load singleplayer world.
 void World_LoadSingleplayer(void);
+int World_QueueRemaining(void);
+bool World_SpawnReady(void);
+void World_FindSpawnPosition(void);
 //Update World
 void World_Update(void);
 //Build Chunks mesh in queue
