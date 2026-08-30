@@ -58,7 +58,7 @@ void Chat_Draw(Vector2 offset, Color uiColor) {
             int startPos = 0;
             char *drawLines[3];
             int drawLinesCnt = 0;
-            for (int i = 0; i < textLength; i++) {
+            for (int i = 0; i < textLength && drawLinesCnt < 3; i++) {
                 const char* sub = TextSubtext(chatLines[index], startPos, i - startPos + 1);
                 int textWidth = MeasureText(sub, fontSize);
                 if (textWidth >= chatWidth - fontSize - 4 || i == textLength - 1) {

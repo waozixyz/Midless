@@ -43,11 +43,21 @@ static void HangWatchdog(int sig) {
     _exit(70);
 }
 
+static void CrashBacktrace(int sig) {
+    void *frames[32];
+    int n = backtrace(frames, 32);
+    backtrace_symbols_fd(frames, n, 2);
+    _exit(71);
+}
+
 static void HangWatchdogInit(void) {
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = HangWatchdog;
     sigaction(SIGALRM, &sa, NULL);
+    sa.sa_handler = CrashBacktrace;
+    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGABRT, &sa, NULL);
 }
 
 
