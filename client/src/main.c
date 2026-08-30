@@ -75,10 +75,10 @@ int main(void) {
     Screens_init(texture, &exitProgram);
 
     // Launch directly into a local world; the title screen stays reachable
-    // from the pause menu. The cursor stays visible for now (no capture).
+    // from the pause menu. Capture the mouse for FPS-style look control.
     World_LoadSingleplayer();
     Screen_Switch(SCREEN_GAME);
-    EnableCursor();
+    DisableCursor();
 
 
     #if defined(PLATFORM_WEB)

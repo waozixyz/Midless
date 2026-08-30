@@ -64,11 +64,14 @@ void Player_CheckInputs() {
         if (Inventory_open) {
             Inventory_open = false;
             Screen_cursorEnabled = false;
+            DisableCursor();
         } else if (Screen_cursorEnabled) {
             Chat_open = false;
             Screen_Switch(SCREEN_GAME);
+            DisableCursor();
         } else {
             Screen_Switch(SCREEN_PAUSE);
+            EnableCursor();
         }
         Screen_cursorEnabled = !Screen_cursorEnabled;
     } else if (IsKeyPressed(KEY_F11)) {
@@ -77,17 +80,21 @@ void Player_CheckInputs() {
         if (!Screen_cursorEnabled) {
             Inventory_open = true;
             Screen_cursorEnabled = true;
+            EnableCursor();
         } else if (Inventory_open) {
             Inventory_open = false;
             Screen_cursorEnabled = false;
+            DisableCursor();
         }
     } else if (IsKeyPressed(KEY_T)) {
         if (Screen_cursorEnabled && !Chat_open) {
             Screen_cursorEnabled = false;
             Screen_Switch(SCREEN_GAME);
+            DisableCursor();
         } else {
             Chat_open = true;
             Screen_cursorEnabled = true;
+            EnableCursor();
         }
     }
     
