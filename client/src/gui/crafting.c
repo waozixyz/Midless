@@ -19,6 +19,13 @@ static Recipe recipes[] = {
     { 14, 1, { 6, 6, 0, 0, 0, 0, 0, 0, 0 }, 1 },
     // fire x1 <- coal_ore + wood (torch)
     { 15, 1, { 8, 4, 0, 0, 0, 0, 0, 0, 0 }, 1 },
+    // Tools: material head with log shafts, Luanti pickaxe/axe/shovel shapes.
+    { 256, 1, { 4, 4, 4, 0, 10, 0, 0, 10, 0 }, 0 },   // wood pickaxe
+    { 257, 1, { 1, 1, 1, 0, 10, 0, 0, 10, 0 }, 0 },   // stone pickaxe
+    { 258, 1, { 4, 4, 0, 4, 10, 0, 0, 10, 0 }, 0 },   // wood axe
+    { 259, 1, { 1, 1, 0, 1, 10, 0, 0, 10, 0 }, 0 },   // stone axe
+    { 260, 1, { 0, 4, 0, 0, 10, 0, 0, 10, 0 }, 0 },   // wood shovel
+    { 261, 1, { 0, 1, 0, 0, 10, 0, 0, 10, 0 }, 0 },   // stone shovel
 };
 
 int Crafting_Count(void) {

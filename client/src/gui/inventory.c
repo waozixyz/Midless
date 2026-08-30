@@ -10,6 +10,22 @@
 #include "crafting.h"
 #include "block.h"
 
+bool Inventory_IsTool(int itemID) {
+    return itemID >= ITEM_WOOD_PICKAXE && itemID < ITEM_COUNT;
+}
+
+const char *Inventory_ItemName(int itemID) {
+    switch (itemID) {
+        case ITEM_WOOD_PICKAXE: return "wood_pickaxe";
+        case ITEM_STONE_PICKAXE: return "stone_pickaxe";
+        case ITEM_WOOD_AXE: return "wood_axe";
+        case ITEM_STONE_AXE: return "stone_axe";
+        case ITEM_WOOD_SHOVEL: return "wood_shovel";
+        case ITEM_STONE_SHOVEL: return "stone_shovel";
+        default: return Block_GetDefinition(itemID).name;
+    }
+}
+
 InvItem Inventory_slots[INV_SLOTS];
 InvItem Inventory_held = { 0 };
 int Inventory_hotbar = 0;
@@ -119,12 +135,37 @@ static void DrawBlockIcon(Texture2D terrain, int blockID, int x, int y, int size
     DrawTexturePro(terrain, src, dst, (Vector2) { 0, 0 }, 0, WHITE);
 }
 
+static void DrawToolIcon(int itemID, int x, int y, int size) {
+    Color head = itemID == ITEM_WOOD_PICKAXE || itemID == ITEM_WOOD_AXE || itemID == ITEM_WOOD_SHOVEL
+        ? (Color) { 160, 110, 60, 255 } : (Color) { 130, 130, 130, 255 };
+    Color handle = (Color) { 100, 70, 40, 255 };
+    int u = size / 8;
+
+    //Diagonal handle from bottom-left to upper-right.
+    for (int i = 1; i <= 5; i++)
+        DrawRectangle(x + i * u, y + (7 - i) * u - u / 2, u, u, handle);
+
+    if (itemID == ITEM_WOOD_PICKAXE || itemID == ITEM_STONE_PICKAXE) {
+        DrawRectangle(x + 1 * u, y + 1 * u, 6 * u, u, head);          // pick bar
+        DrawRectangle(x + 1 * u, y + 2 * u, u, u, head);
+        DrawRectangle(x + 6 * u, y + 2 * u, u, u, head);
+    } else if (itemID == ITEM_WOOD_AXE || itemID == ITEM_STONE_AXE) {
+        DrawRectangle(x + 4 * u, y + 1 * u, 3 * u, 2 * u, head);      // axe blade
+        DrawRectangle(x + 3 * u, y + 2 * u, u, u, head);
+    } else {
+        DrawRectangle(x + 5 * u, y + 1 * u, 2 * u, 2 * u, head);      // shovel head
+    }
+}
+
 static void DrawSlot(Texture2D terrain, InvItem *slot, int x, int y, int size, bool selected) {
     DrawRectangle(x, y, size, size, (Color) { 20, 20, 20, 140 });
     DrawRectangleLinesEx((Rectangle) { x, y, size, size }, selected ? 3 : 1,
                          selected ? WHITE : (Color) { 255, 255, 255, 90 });
     if (slot->count > 0) {
-        DrawBlockIcon(terrain, slot->blockID, x + 4, y + 4, size - 8);
+        if (Inventory_IsTool(slot->blockID))
+            DrawToolIcon(slot->blockID, x + 4, y + 4, size - 8);
+        else
+            DrawBlockIcon(terrain, slot->blockID, x + 4, y + 4, size - 8);
         const char *countText = TextFormat("%d", slot->count);
         DrawText(countText, x + size - 4 - MeasureText(countText, 14), y + size - 20, 14, BLACK);
         DrawText(countText, x + size - 5 - MeasureText(countText, 14), y + size - 21, 14, WHITE);
@@ -181,8 +222,7 @@ static void DrawCraftingList(Texture2D terrain, int x, int y, int w) {
             DrawRectangle(x + 4, rowY + 4, rowH - 14, rowH - 14, (Color) { 0, 0, 0, 120 });
         }
 
-        Block resultDef = Block_GetDefinition(recipe.resultBlock);
-        const char *title = TextFormat("%s x%d", resultDef.name, recipe.resultCount);
+        const char *title = TextFormat("%s x%d", Inventory_ItemName(recipe.resultBlock), recipe.resultCount);
         DrawText(title, x + rowH - 4, rowY + 4, 14, tint);
 
         char needs[128] = "";
@@ -197,11 +237,10 @@ static void DrawCraftingList(Texture2D terrain, int x, int y, int w) {
                     same++;
                 }
             }
-            Block ingDef = Block_GetDefinition(ingBlock);
             char part[48];
             snprintf(part, sizeof(part), "%s%s x%d",
                      needs[0] != '\0' ? ", " : "",
-                     ingDef.name,
+                     Inventory_ItemName(ingBlock),
                      same);
             strncat(needs, part, sizeof(needs) - strlen(needs) - 1);
         }

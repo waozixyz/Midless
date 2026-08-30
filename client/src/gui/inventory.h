@@ -14,6 +14,20 @@
 #define INV_HOTBAR_SLOTS INV_COLS
 #define INV_STACK_MAX 999
 
+//Craftable tool items live above the block id space.
+typedef enum ToolItem {
+    ITEM_WOOD_PICKAXE = 256,
+    ITEM_STONE_PICKAXE,
+    ITEM_WOOD_AXE,
+    ITEM_STONE_AXE,
+    ITEM_WOOD_SHOVEL,
+    ITEM_STONE_SHOVEL,
+    ITEM_COUNT
+} ToolItem;
+
+bool Inventory_IsTool(int itemID);
+const char *Inventory_ItemName(int itemID);
+
 typedef struct InvItem {
     int blockID;
     int count;

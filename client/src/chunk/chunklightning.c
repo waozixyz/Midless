@@ -230,12 +230,18 @@ void Chunk_UpdateLight(bool sunlight) {
                 Block blockDefinition = Block_GetDefinition(nextChunk->data[nextIndex]);
                 if (blockDefinition.renderType == BlockRenderType_Opaque) continue;
 
+                //Collect re-lit sources; they are re-propagated once after
+                //the removal pass. Spreading from inside this loop nests a
+                //full BFS per neighbour of every removal and explodes into
+                //billions of iterations (the multi-minute 'freeze' after
+                //placing a block).
                 Chunk_LightQueueAdd(nextIndex, nextChunk);
-                Chunk_SpreadLight(sunlight);
             } 
             
         }
     }
+
+    Chunk_SpreadLight(sunlight);
 }
 
 void Chunk_AddLightSource(Chunk *srcChunk, Vector3 srcPos, int intensity, bool sunlight) {

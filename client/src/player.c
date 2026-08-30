@@ -223,7 +223,8 @@ void Player_CheckInputs() {
             Vector3 placePos = Vector3Add(player.rayResult.hitPos, player.rayResult.normal);
             
             int placeBlock = Inventory_SelectedBlock();
-            if (placeBlock > 0 && player.rayResult.hitBlockID != -1) {
+            if (placeBlock > 0 && !Inventory_IsTool(placeBlock) &&
+                player.rayResult.hitBlockID != -1) {
                 int bottomBlockID = World_GetBlock(Vector3Add(placePos, (Vector3){0, -1, 0}));
                 switch (placeBlock)
                 {
@@ -283,22 +284,35 @@ void Game_SetCursorCaptured(bool captured) {
 }
 
 float Player_BlockBreakTime(int blockID) {
+    float base;
+    int class = 0; // 0=dirt-like, 1=stone-like, 2=wood-like
     switch (blockID) {
-        case 1: return 1.5f;    // stone
-        case 7: return 2.0f;    // iron ore
-        case 8: return 1.8f;    // coal ore
-        case 9: return 2.2f;    // gold ore
-        case 10: return 0.9f;   // log
-        case 4: return 0.7f;    // wood
-        case 17: return 0.9f;   // stone slab
-        case 18: return 0.5f;   // wood slab
-        case 14: return 0.25f;  // glass
-        case 11: return 0.15f;  // leaves
-        case 12: return 0.05f;  // rose
-        case 13: return 0.05f;  // dandelion
-        case 15: return 0.05f;  // fire
-        default: return 0.45f;  // dirt, grass, sand, ...
+        case 1: base = 1.5f; class = 1; break;   // stone
+        case 7: base = 2.0f; class = 1; break;   // iron ore
+        case 8: base = 1.8f; class = 1; break;   // coal ore
+        case 9: base = 2.2f; class = 1; break;   // gold ore
+        case 10: base = 0.9f; class = 2; break;  // log
+        case 4: base = 0.7f; class = 2; break;   // wood
+        case 17: base = 0.9f; class = 1; break;  // stone slab
+        case 18: base = 0.5f; class = 2; break;  // wood slab
+        case 14: base = 0.25f; break;            // glass
+        case 11: base = 0.15f; break;            // leaves
+        case 12: base = 0.05f; break;            // rose
+        case 13: base = 0.05f; break;            // dandelion
+        case 15: base = 0.05f; break;            // fire
+        default: base = 0.45f; break;            // dirt, grass, sand, ...
     }
+
+    //Matching tool tier in the selected slot speeds up its block class.
+    int held = Inventory_SelectedBlock();
+    int toolClass = held == ITEM_WOOD_PICKAXE || held == ITEM_STONE_PICKAXE ? 1 :
+                    held == ITEM_WOOD_AXE || held == ITEM_STONE_AXE ? 2 :
+                    held == ITEM_WOOD_SHOVEL || held == ITEM_STONE_SHOVEL ? 0 : -1;
+    if (toolClass == class) {
+        int stone = held == ITEM_STONE_PICKAXE || held == ITEM_STONE_AXE || held == ITEM_STONE_SHOVEL;
+        return base / (stone ? 4.0f : 2.5f);
+    }
+    return base;
 }
 
 bool Player_TryPlaceBlock(Vector3 pos, int blockID)
