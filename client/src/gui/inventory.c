@@ -220,10 +220,13 @@ static void DrawCraftingList(Texture2D terrain, int x, int y, int w) {
 }
 
 void Inventory_Draw(Texture2D terrain, int screenWidth, int screenHeight) {
-    //Hotbar (always, Terraria-style top-left).
+    //Hotbar (always), Luanti-style at the bottom center.
     int hotSize = 44;
+    int hotbarW = INV_HOTBAR_SLOTS * (hotSize + 4) - 4;
+    int hotX = screenWidth / 2 - hotbarW / 2;
+    int hotY = screenHeight - hotSize - 12;
     for (int i = 0; i < INV_HOTBAR_SLOTS; i++) {
-        DrawSlot(terrain, &Inventory_slots[i], 8 + i * (hotSize + 4), 8, hotSize, i == Inventory_hotbar);
+        DrawSlot(terrain, &Inventory_slots[i], hotX + i * (hotSize + 4), hotY, hotSize, i == Inventory_hotbar);
     }
 
     if (!Inventory_open) return;
