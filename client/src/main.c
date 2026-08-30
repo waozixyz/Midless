@@ -17,6 +17,9 @@
 #include <unistd.h>
 #include <execinfo.h>
 #include "kryon.h"
+
+//Kryon screenshot front-end helper (implemented in the kryon back end).
+extern int kry_write_png_file(const char *path, const unsigned char *rgba, int w, int h);
 #include "player.h"
 #include "inventory.h"
 #include "world.h"
@@ -121,6 +124,33 @@ int main(void) {
     return 0;
 }
 
+static void RenderFrame(void) {
+    Vector3 selectionBoxPos = (Vector3) { floor(player.rayResult.hitPos.x) + 0.5f, floor(player.rayResult.hitPos.y), floor(player.rayResult.hitPos.z) + 0.5f};
+
+    float sunlightStrength = World_GetSunlightStrength();
+    ClearBackground((Color) { 140 * sunlightStrength, 210 * sunlightStrength, 240 * sunlightStrength, 255});
+
+    if (Screen_Current != SCREEN_LOADING) BeginMode3D(player.camera);
+    if (Screen_Current != SCREEN_LOADING) {
+        World_Draw(player.camera.position);
+        if (player.rayResult.hitBlockID != -1) {
+            Block block = Block_GetDefinition(player.rayResult.hitBlockID);
+            Vector3 blockSize = Vector3Subtract(block.maxBB, block.minBB);
+            blockSize = Vector3Scale(blockSize, 1.0f / 16);
+            selectionBoxPos.y += blockSize.y / 2;
+            DrawCube(selectionBoxPos, blockSize.x + 0.02f, blockSize.y + 0.02f, blockSize.z + 0.02f, (Color){255, 255, 255, 40});
+        }
+    }
+    if (Screen_Current != SCREEN_LOADING) EndMode3D();
+
+    int uiW = GetScreenWidth();
+    int uiH = GetScreenHeight();
+    UpdateUIDPI(uiW, uiH);
+    BeginUIFrame(uiW, uiH, GetUIScale());
+    Screen_Make();
+    EndUIFrame();
+}
+
 void GameLoop(void) {
     alarm(3);
     static unsigned long dbgFrame = 0;
@@ -138,40 +168,55 @@ void GameLoop(void) {
     World_Update();
     double tWorld = GetTime();
     
-    Vector3 selectionBoxPos = (Vector3) { floor(player.rayResult.hitPos.x) + 0.5f, floor(player.rayResult.hitPos.y), floor(player.rayResult.hitPos.z) + 0.5f};
-    
     // Draw
+    double tUpdateAll = GetTime();
     BeginDrawing();
-
-        float sunlightStrength = World_GetSunlightStrength();
-        ClearBackground((Color) { 140 * sunlightStrength, 210 * sunlightStrength, 240 * sunlightStrength, 255});
-
-        if (Screen_Current != SCREEN_LOADING) BeginMode3D(player.camera);
-        if (Screen_Current != SCREEN_LOADING) {
-            World_Draw(player.camera.position);
-            if (player.rayResult.hitBlockID != -1) {
-                Block block = Block_GetDefinition(player.rayResult.hitBlockID);
-                Vector3 blockSize = Vector3Subtract(block.maxBB, block.minBB);
-                blockSize = Vector3Scale(blockSize, 1.0f / 16);
-                selectionBoxPos.y += blockSize.y / 2;
-                DrawCube(selectionBoxPos, blockSize.x + 0.02f, blockSize.y + 0.02f, blockSize.z + 0.02f, (Color){255, 255, 255, 40});
-            }
-                
-        }
-        if (Screen_Current != SCREEN_LOADING) EndMode3D();
-        
-        double tUpdateAll = GetTime();
-        int uiW = GetScreenWidth();
-        int uiH = GetScreenHeight();
-        UpdateUIDPI(uiW, uiH);
-        BeginUIFrame(uiW, uiH, GetUIScale());
-        Screen_Make();
-        double tUi = GetTime();
-        EndUIFrame();
-
+    RenderFrame();
+    double tUi = GetTime();
     EndDrawing();
 
     dbgFrame++;
+
+    //Headless bring-up aid: KATALIS_SHOT=f1,f2,... re-renders those frames
+    //into an FBO and dumps it to PNG (works on surfaceless GPU contexts
+    //where the backbuffer is unreadable).
+    {
+        static int shotFrames[16];
+        static int shotCount = -1;
+        static int shotIdx = 0;
+        static RenderTexture2D shotRT = { 0 };
+        if (shotCount < 0) {
+            shotCount = 0;
+            const char *spec = getenv("KATALIS_SHOT");
+            if (spec != NULL) {
+                char buf[128];
+                snprintf(buf, sizeof(buf), "%s", spec);
+                char *tok = strtok(buf, ",");
+                while (tok != NULL && shotCount < 16) {
+                    shotFrames[shotCount++] = TextToInteger(tok);
+                    tok = strtok(NULL, ",");
+                }
+            }
+        }
+        if (shotIdx < shotCount && dbgFrame >= (unsigned long)shotFrames[shotIdx]) {
+            if (shotRT.id == 0) shotRT = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+            BeginTextureMode(shotRT);
+            RenderFrame();
+            EndTextureMode();
+            Image img = LoadImageFromTexture(shotRT.texture);
+            if (img.data != NULL) {
+                char path[128];
+                snprintf(path, sizeof(path), "shot_%05lu.png", dbgFrame);
+                int rc = kry_write_png_file(path, (const unsigned char *)img.data, img.width, img.height);
+                fprintf(stderr, "DBG wrote %s (%dx%d) rc=%d\n", path, img.width, img.height, rc);
+                UnloadImage(img);
+            } else {
+                fprintf(stderr, "DBG fbo shot readback failed\n");
+            }
+            shotIdx++;
+        }
+    }
+
     if (GetTime() - dbgT0 > 2.0) {
         fprintf(stderr, "DBG frame=%lu net=%.4f player=%.4f world=%.4f preui=%.4f ui=%.4f total=%.4f hit=%d sel=%d camy=%.1f pgy=%.1f\n",
                 dbgFrame, tNet - stageT, tPlayer - tNet, tWorld - tPlayer,
