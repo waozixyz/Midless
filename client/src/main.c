@@ -178,6 +178,7 @@ void GameLoop(void) {
                 tUpdateAll - tWorld, tUi - tUpdateAll, GetTime() - stageT,
                 player.rayResult.hitBlockID, Inventory_SelectedBlock(),
                 0.0f, player.position.y);
+        fprintf(stderr, "DBG screen=%d queue=%d\n", (int)Screen_Current, World_QueueRemaining());
         dbgT0 = GetTime();
     }
 }

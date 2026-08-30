@@ -78,6 +78,10 @@ void ChunkMesh_PrepareDrawing(Material mat) {
 
     float sunlightStrength = World_GetSunlightStrength();
     rlSetUniform(rlGetLocationUniform(mat.shader.id, "sunlightStrength"), &sunlightStrength, RL_SHADER_UNIFORM_FLOAT, 1);
+
+    //Distance fog blends into the current sky color instead of black.
+    Vector3 skyColor = { 0.549f * sunlightStrength, 0.824f * sunlightStrength, 0.941f * sunlightStrength };
+    rlSetUniform(rlGetLocationUniform(mat.shader.id, "skyColor"), &skyColor, RL_SHADER_UNIFORM_VEC3, 1);
 }
 
 void ChunkMesh_FinishDrawing(void) {

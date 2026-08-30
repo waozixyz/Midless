@@ -101,15 +101,33 @@ bool World_SpawnReady(void) {
     return world.loadChunks && arrlen(world.generateChunksQueue) == 0;
 }
 
-//Stand the player on the first solid surface of the spawn column instead
-//of a fixed height that can be mid-air or buried inside terrain.
+//Stand the player on open, opaque ground with headroom. Spirals outward
+//from the origin so tree canopies (solid leaves), water columns and
+//overhangs are skipped instead of spawning the camera inside them.
 void World_FindSpawnPosition(void) {
-    for (int y = CHUNK_SIZE_Y * 8; y > 0; y--) {
-        Block block = Block_GetDefinition(World_GetBlock((Vector3) { 0, y, 0 }));
-        if (block.colliderType == BlockColliderType_Solid && Block_IsFullSize(&block)) {
-            player.position = (Vector3) { 0, y + 1, 0 };
-            player.velocity = (Vector3) { 0 };
-            return;
+    for (int r = 0; r <= 16; r++) {
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                if (dx > -r && dx < r && dz > -r && dz < r) continue; // ring only
+
+                for (int y = CHUNK_SIZE_Y * 8; y > 2; y--) {
+                    Block ground = Block_GetDefinition(World_GetBlock((Vector3) { dx, y, dz }));
+                    if (ground.colliderType != BlockColliderType_Solid ||
+                        ground.renderType != BlockRenderType_Opaque ||
+                        !Block_IsFullSize(&ground)) continue;
+
+                    Block above1 = Block_GetDefinition(World_GetBlock((Vector3) { dx, y + 1, dz }));
+                    Block above2 = Block_GetDefinition(World_GetBlock((Vector3) { dx, y + 2, dz }));
+                    if (above1.colliderType == BlockColliderType_Solid ||
+                        above2.colliderType == BlockColliderType_Solid) break;   // under a canopy
+                    if (above1.colliderType == BlockColliderType_Liquid ||
+                        above2.colliderType == BlockColliderType_Liquid) break;  // underwater
+
+                    player.position = (Vector3) { dx, y + 1, dz };
+                    player.velocity = (Vector3) { 0 };
+                    return;
+                }
+            }
         }
     }
     player.position = (Vector3) { 0, 80, 0 };

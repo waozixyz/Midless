@@ -13,6 +13,7 @@
 "uniform sampler2D texture0;"
 "uniform float drawDistance;"
 "uniform float sunlightStrength;"
+"uniform vec3 skyColor;"
 "out vec4 finalColor;"
 "float getFog(float d)"
 "{"
